@@ -1,0 +1,38 @@
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime, timedelta
+import asyncio
+import aiogram
+
+from config import config
+
+
+async def check_deadlines():
+    bot = aiogram.Bot(token=config.BOT_TOKEN) 
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_file("credentials.json", scopes=scopes)
+    client = gspread.authorize(creds)
+
+    sheet_id = config.SHEETS_ID
+    workbook = client.open_by_key(sheet_id)
+    sheets = workbook.worksheets()
+
+    today = datetime.now().strftime("%d.%m")
+
+    for sheet in sheets:
+        data = sheet.get_all_values()
+        for row in data:
+            fio = row[0]
+            bdate = row[1]
+            if bdate == today:
+                await bot.send_message(chat_id=, text=f"Сегодня день рождения у {fio}!")
+
+async def main():
+    bot = aiogram.Bot(token=)
+    await bot.send_message(chat_id=, text=f"Бот запущен!")
+    while True:
+        await check_deadlines()
+        await asyncio.sleep(24 * 60 * 60)
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
