@@ -102,9 +102,9 @@ async def users_list(message: types.Message):
     if ADMIN_ID and message.from_user.id != ADMIN_ID:
         await message.reply("У вас нет доступа к этому разделу.", reply_markup = keyboard_check(message))
         logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.")
-        f = open('logs.txt', 'a'); f.write(f"WARNING|Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.\n"); f.close()
+        #f = open('logs.txt', 'a'); f.write(f"WARNING|Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.\n"); f.close()
         return
-    f = open('logs.txt', 'a'); f.write(f"Администратор {message.from_user.id} запросил список пользователей.\n");f.close()
+    #f = open('logs.txt', 'a'); f.write(f"Администратор {message.from_user.id} запросил список пользователей.\n");f.close()
     logger.info(f"Администратор {message.from_user.id} запросил список пользователей.")
     try:
         users = read_csv_data('users.csv', 'users')
@@ -118,7 +118,7 @@ async def users_list(message: types.Message):
     except Exception as e:
         await message.reply(f"Произошла ошибка: {e}", reply_markup = keyboard_check(message))
         logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
-        f = open('logs.txt', 'a'); f.write(f"У администратора {message.from_user.id} произошла ошибка: {e}\n"); f.close()
+        #f = open('logs.txt', 'a'); f.write(f"У администратора {message.from_user.id} произошла ошибка: {e}\n"); f.close()
 
 async def check_deadlines():
     today = datetime.now().strftime("%d.%m")
@@ -137,14 +137,14 @@ async def check_deadlines():
                     logger.info(f"Отправлено сообщение: {message}")
     except FileNotFoundError:
         logger.error("Файл birthdays.csv не найден.\n")
-        f = open('logs.txt', 'a'); f.write("Файл birthdays.csv не найден.\n"); f.close()
+        #f = open('logs.txt', 'a'); f.write("Файл birthdays.csv не найден.\n"); f.close()
     except Exception as e:
         logger.error(f"Произошла ошибка при проверке дедлайнов: {e}\n")
-        f = open('logs.txt', 'a'); f.write(f"Произошла ошибка при проверке дедлайнов: {e}\n"); f.close()
+        #f = open('logs.txt', 'a'); f.write(f"Произошла ошибка при проверке дедлайнов: {e}\n"); f.close()
 
 async def scheduled_check():
     logger.info("Бот запущен и начал проверку дедлайнов.")
-    f = open('logs.txt', 'a'); f.write("Бот запущен и начал проверку дедлайнов.\n"); f.close()
+    #f = open('logs.txt', 'a'); f.write("Бот запущен и начал проверку дедлайнов.\n"); f.close()
     await bot.send_message(CHAT_ID, text="🚀 Бот запущен и начал проверку дедлайнов!")
     while True:
         await check_deadlines()
