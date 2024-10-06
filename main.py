@@ -13,7 +13,6 @@ dp = Dispatcher(bot=bot)
 class RoleMiddleware(BaseMiddleware):
     def __init__(self):
         super(RoleMiddleware, self).__init__()
-
     async def on_process_message(self, message: Message, data: dict):
         user_id = message.from_user.id
         if str(user_id) in config.ADMINS:
@@ -24,6 +23,7 @@ class RoleMiddleware(BaseMiddleware):
            data['role'] = 'super_users'
         else:
             data['role'] = 'user'
+
 dp.middleware.setup(RoleMiddleware())
 
 keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -42,6 +42,7 @@ def keyboard_check(role: str):
 async def send_welcome(message: types.Message, role:str):
     config.logger.info(f"Пользователь {message.from_user.id} вызвал команду /start.")
     await message.reply("Привет! Я бот для уведомлений о днях рождения.", reply_markup = keyboard_check(role))
+
 
 @dp.message_handler(text='Помощь')
 async def support(message: types.Message, role:str):
@@ -75,7 +76,7 @@ def read_csv_data(file_path, data_type):
 
 @dp.message_handler(text='Список дней рождений')
 async def birthdays_list(message: types.Message, role: str):
-    config.logger.info(f"Администратор {message.from_user.id} запросил список дней рождений.")
+    config.logger.info(f"Пользователь {message.from_user.id}(роль {role})запросил список дней рождений.")
     try:
         with open('birthdays.csv', mode='r', encoding='utf-8') as file:
             birthdays = read_csv_data('birthdays.csv', 'birthdays')

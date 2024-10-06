@@ -11,10 +11,10 @@ ASSISTANTS = os.getenv('SUPPORT_ID')
 
 ADMIN_IDS = os.getenv("ADMIN_IDS").split(",")
 ADMINS = [int(admin_id.strip()) for admin_id in ADMIN_IDS]
-
+print (ADMINS)
 SUPER_USER_IDS = os.getenv("SUPER_USER_IDS").split(",")
 SUPER_USERS = [int(super_user_id.strip()) for super_user_id in SUPER_USER_IDS]
-
+print (SUPER_USERS)
 if not BOT_TOKEN:
     logger.error("Не найден BOT_TOKEN в переменных окружения.")
     raise ValueError("Не найден BOT_TOKEN в переменных окружения.")
