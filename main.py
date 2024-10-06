@@ -3,10 +3,29 @@ import asyncio
 from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ReplyKeyboardMarkup
+from aiogram.dispatcher.middlewares import BaseMiddleware
+from aiogram.types import Message
 import config
 
 bot = Bot(token=config.BOT_TOKEN)
 dp = Dispatcher(bot=bot)
+
+class RoleMiddleware(BaseMiddleware):
+    def __init__(self):
+        super(RoleMiddleware, self).__init__()
+
+    async def on_process_message(self, message: Message, data: dict):
+        user_id = message.from_user.id
+        if str(user_id) in config.ADMINS:
+            data['role'] = 'admin'
+        elif str(user_id) in config.ASSISTANTS:
+            data['role'] = 'assistant'
+        #elif str(user_id) in config.SUPER_USERS:    Не  понятно.
+        #   data['role'] = 'super_users'
+        else:
+            data['role'] = 'user'
+dp.middleware.setup(RoleMiddleware())
+
 
 keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 keyboard.add('Список дней рождений').add('Добавить день рождения').add('Помощь')
@@ -15,7 +34,7 @@ admin_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 admin_keyboard.add('Список дней рождений').add('Добавить день рождения').add('Список пользователей')
 
 def keyboard_check(message: types.Message):
-    if config.ADMIN_ID and message.from_user.id == config.ADMIN_ID:
+    if config.ADMINS and message.from_user.id == config.ADMINS:
         return admin_keyboard
     else:
         return keyboard
@@ -27,7 +46,7 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(text='Помощь')
 async def support(message: types.Message):
-    await message.reply(f'Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {SUPPORT_ID}.\n',reply_markup = keyboard_check(message))
+    await message.reply(f'Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {config.ASSISTANTS}.\n', reply_markup = keyboard_check(message))
 
 @dp.message_handler(text='Добавить день рождения')
 async def add_birthday(message: types.Message):
@@ -71,7 +90,8 @@ async def birthdays_list(message: types.Message):
 
 @dp.message_handler(text='Список пользователей')
 async def users_list(message: types.Message):
-    if config.ADMIN_ID and message.from_user.id != config.ADMIN_ID:
+    #if config.ADMINS and message.from_user.id != config.ADMINS:
+    if config.role != 'admin':
         await message.reply("У вас нет доступа к этому разделу.", reply_markup = keyboard_check(message))
         config.logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.")
         #f = open('logs.txt', 'a'); f.write(f"WARNING|Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.\n"); f.close()
@@ -92,27 +112,26 @@ async def users_list(message: types.Message):
         config.logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
         #f = open('logs.txt', 'a'); f.write(f"У администратора {message.from_user.id} произошла ошибка: {e}\n"); f.close()
 
+
 async def check_deadlines():
     today = datetime.now().strftime("%d.%m")
     config.logger.info(f"Проверка дней рождения на дату: {today}")
     try:
-        with open('birthdays.csv', mode='r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                if len(row) < 2:
-                    config.logger.warning(f"Некорректная строка в CSV: {row}")
-                    continue
-                fio, bdate = row[0].strip(), row[1].strip()
+        birthdays = read_csv_data('birthdays.csv', 'birthdays')
+        for entry in birthdays:
+            try:
+                fio, bdate = entry.split(': ')
                 if bdate == today:
                     message = f"🎉 Сегодня день рождения у {fio}!"
                     await bot.send_message(config.CHAT_ID, text=message)
                     config.logger.info(f"Отправлено сообщение: {message}")
+            except ValueError:
+                config.logger.warning(f"Некорректный формат записи: {entry}")
     except FileNotFoundError:
         config.logger.error("Файл birthdays.csv не найден.\n")
-        #f = open('logs.txt', 'a'); f.write("Файл birthdays.csv не найден.\n"); f.close()
     except Exception as e:
         config.logger.error(f"Произошла ошибка при проверке дедлайнов: {e}\n")
-        #f = open('logs.txt', 'a'); f.write(f"Произошла ошибка при проверке дедлайнов: {e}\n"); f.close()
+
 
 async def scheduled_check():
     config.logger.info("Бот запущен и начал проверку дедлайнов.")
