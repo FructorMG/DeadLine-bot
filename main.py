@@ -20,8 +20,8 @@ class RoleMiddleware(BaseMiddleware):
             data['role'] = 'admin'
         elif str(user_id) in config.ASSISTANTS:
             data['role'] = 'assistant'
-        #elif str(user_id) in config.SUPER_USERS:    Не  понятно.
-        #   data['role'] = 'super_users'
+        elif str(user_id) in config.SUPER_USERS:
+           data['role'] = 'super_users'
         else:
             data['role'] = 'user'
 dp.middleware.setup(RoleMiddleware())
@@ -49,9 +49,12 @@ async def support(message: types.Message):
     await message.reply(f'Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {config.ASSISTANTS}.\n', reply_markup = keyboard_check(message))
 
 @dp.message_handler(text='Добавить день рождения')
-async def add_birthday(message: types.Message):
+async def add_birthday(message: types.Message, role: str):
     # РЕАЛИЗОВАТЬ
-    await message.reply("Реализовать.", reply_markup = keyboard_check(message))
+    if role == 'super_users' :
+        await message.reply("Реализовать.", reply_markup = keyboard_check(message))
+    else:
+        await message.reply("Для доступа к этому разделу необходима подписка уровня SUPER_USER.", reply_markup=keyboard_check(message))
 
 def read_csv_data(file_path, data_type):
     result = []
@@ -89,9 +92,8 @@ async def birthdays_list(message: types.Message):
         config.logger.error(f"У пользователя {message.from_user.id} произошла ошибка: {e}")
 
 @dp.message_handler(text='Список пользователей')
-async def users_list(message: types.Message):
-    #if config.ADMINS and message.from_user.id != config.ADMINS:
-    if config.role != 'admin':
+async def users_list(message: types.Message, role: str):
+    if role != 'admin':
         await message.reply("У вас нет доступа к этому разделу.", reply_markup = keyboard_check(message))
         config.logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.")
         #f = open('logs.txt', 'a'); f.write(f"WARNING|Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.\n"); f.close()
@@ -111,7 +113,6 @@ async def users_list(message: types.Message):
         await message.reply(f"Произошла ошибка: {e}", reply_markup = keyboard_check(message))
         config.logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
         #f = open('logs.txt', 'a'); f.write(f"У администратора {message.from_user.id} произошла ошибка: {e}\n"); f.close()
-
 
 async def check_deadlines():
     today = datetime.now().strftime("%d.%m")
