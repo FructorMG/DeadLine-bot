@@ -26,35 +26,34 @@ class RoleMiddleware(BaseMiddleware):
             data['role'] = 'user'
 dp.middleware.setup(RoleMiddleware())
 
-
 keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 keyboard.add('Список дней рождений').add('Добавить день рождения').add('Помощь')
 
 admin_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 admin_keyboard.add('Список дней рождений').add('Добавить день рождения').add('Список пользователей')
 
-def keyboard_check(message: types.Message):
-    if config.ADMINS and message.from_user.id == config.ADMINS:
+def keyboard_check(role: str):
+    if role == 'admin':
         return admin_keyboard
     else:
         return keyboard
 
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
+async def send_welcome(message: types.Message, role:str):
     config.logger.info(f"Пользователь {message.from_user.id} вызвал команду /start.")
-    await message.reply("Привет! Я бот для уведомлений о днях рождения.", reply_markup = keyboard_check(message))
+    await message.reply("Привет! Я бот для уведомлений о днях рождения.", reply_markup = keyboard_check(role))
 
 @dp.message_handler(text='Помощь')
-async def support(message: types.Message):
-    await message.reply(f'Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {config.ASSISTANTS}.\n', reply_markup = keyboard_check(message))
+async def support(message: types.Message, role:str):
+    await message.reply(f'Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {config.ASSISTANTS}.\n', reply_markup = keyboard_check(role))
 
 @dp.message_handler(text='Добавить день рождения')
 async def add_birthday(message: types.Message, role: str):
     # РЕАЛИЗОВАТЬ
     if role == 'super_users' :
-        await message.reply("Реализовать.", reply_markup = keyboard_check(message))
+        await message.reply("Реализовать.", reply_markup = keyboard_check(role))
     else:
-        await message.reply("Для доступа к этому разделу необходима подписка уровня SUPER_USER.", reply_markup=keyboard_check(message))
+        await message.reply("Для доступа к этому разделу необходима подписка уровня SUPER_USER.", reply_markup=keyboard_check(role))
 
 def read_csv_data(file_path, data_type):
     result = []
@@ -75,26 +74,26 @@ def read_csv_data(file_path, data_type):
     return result
 
 @dp.message_handler(text='Список дней рождений')
-async def birthdays_list(message: types.Message):
+async def birthdays_list(message: types.Message, role: str):
     config.logger.info(f"Администратор {message.from_user.id} запросил список дней рождений.")
     try:
         with open('birthdays.csv', mode='r', encoding='utf-8') as file:
             birthdays = read_csv_data('birthdays.csv', 'birthdays')
         if birthdays:
-            await message.reply("Список дней рождений:\n" + "\n".join(birthdays), reply_markup = keyboard_check(message))
+            await message.reply("Список дней рождений:\n" + "\n".join(birthdays), reply_markup = keyboard_check(role))
         else:
-            await message.reply("В списке нет дней рождений.", reply_markup = keyboard_check(message))
+            await message.reply("В списке нет дней рождений.", reply_markup = keyboard_check(role))
     except FileNotFoundError:
-        await message.reply("Файл birthdays.csv не найден.", reply_markup = keyboard_check(message))
+        await message.reply("Файл birthdays.csv не найден.", reply_markup = keyboard_check(role))
         config.logger.error("Файл birthdays.csv не найден.")
     except Exception as e:
-        await message.reply(f"Произошла ошибка: {e}", reply_markup = keyboard_check(message))
+        await message.reply(f"Произошла ошибка: {e}", reply_markup = keyboard_check(role))
         config.logger.error(f"У пользователя {message.from_user.id} произошла ошибка: {e}")
 
 @dp.message_handler(text='Список пользователей')
 async def users_list(message: types.Message, role: str):
     if role != 'admin':
-        await message.reply("У вас нет доступа к этому разделу.", reply_markup = keyboard_check(message))
+        await message.reply("У вас нет доступа к этому разделу.", reply_markup = keyboard_check(role))
         config.logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.")
         #f = open('logs.txt', 'a'); f.write(f"WARNING|Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.\n"); f.close()
         return
@@ -103,14 +102,14 @@ async def users_list(message: types.Message, role: str):
     try:
         users = read_csv_data('users.csv', 'users')
         if users:
-            await message.reply("Список пользователей:\n" + "\n".join(users), reply_markup = keyboard_check(message))
+            await message.reply("Список пользователей:\n" + "\n".join(users), reply_markup = keyboard_check(role))
         else:
-            await message.reply("В списке нет пользователей.", reply_markup = keyboard_check(message))
+            await message.reply("В списке нет пользователей.", reply_markup = keyboard_check(role))
     except FileNotFoundError:
-        await message.reply("Файл users.csv не найден.", reply_markup = keyboard_check(message))
+        await message.reply("Файл users.csv не найден.", reply_markup = keyboard_check(role))
         config.logger.error("Файл users.csv не найден.")
     except Exception as e:
-        await message.reply(f"Произошла ошибка: {e}", reply_markup = keyboard_check(message))
+        await message.reply(f"Произошла ошибка: {e}", reply_markup = keyboard_check(role))
         config.logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
         #f = open('logs.txt', 'a'); f.write(f"У администратора {message.from_user.id} произошла ошибка: {e}\n"); f.close()
 
@@ -132,7 +131,6 @@ async def check_deadlines():
         config.logger.error("Файл birthdays.csv не найден.\n")
     except Exception as e:
         config.logger.error(f"Произошла ошибка при проверке дедлайнов: {e}\n")
-
 
 async def scheduled_check():
     config.logger.info("Бот запущен и начал проверку дедлайнов.")
