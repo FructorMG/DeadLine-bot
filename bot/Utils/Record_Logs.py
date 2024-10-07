@@ -12,3 +12,8 @@ class RecordLogs:
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open('user_logs.txt', 'a') as f:
             f.write(f"{current_time} - пользователь {user_id} {user_action}\n")
+    @staticmethod
+    def error_log(user_id: int, error: str):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open('error_logs.txt', 'a') as f:
+            f.write(f"{current_time} - Пользователь {user_id}  ОШИБКА:{error}\n")

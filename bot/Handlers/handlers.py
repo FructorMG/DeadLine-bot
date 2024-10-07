@@ -5,7 +5,7 @@ from bot.Keyboards import KeyBoards
 from bot.Utils.csv_utils import read_csv_data
 from bot.Utils.Record_Logs import RecordLogs
 from bot.config import config
-from bot.bd.bd import new_user
+from bot.bd.bd import new_user, get_all_users
 
 logger = logging.getLogger("bot")
 class Handlers:
@@ -76,11 +76,12 @@ class Handlers:
         logger.info(f"Администратор {message.from_user.id} запросил список пользователей.")
         RecordLogs.log_admin_action(message.from_user.id, "запросил список пользователей.")
         try:
-            users = read_csv_data('users.csv', 'users')
-            if users:
-                await message.reply("Список пользователей:\n" + "\n".join(users), reply_markup=KeyBoards.get_keyboard(role))
-            else:
-                await message.reply("В списке нет пользователей.", reply_markup=KeyBoards.get_keyboard(role))
+            await get_all_users(message)
+            #users = read_csv_data('users.csv', 'users')
+            #if users:
+            #    await message.reply("Список пользователей:\n" + "\n".join(users), reply_markup=KeyBoards.get_keyboard(role))
+            #else:
+            #await message.reply("В списке нет пользователей.", reply_markup=KeyBoards.get_keyboard(role))
         except FileNotFoundError:
             await message.reply("Файл users.csv не найден.", reply_markup=KeyBoards.get_keyboard(role))
             logger.error("Файл users.csv не найден.")

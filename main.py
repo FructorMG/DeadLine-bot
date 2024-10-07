@@ -12,7 +12,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("bot")
 
-# Основная функция для запуска бота
 async def on_startup(dispatcher):
     logger.info("Бот запущен и готов к работе.")
     setup_middlewares()

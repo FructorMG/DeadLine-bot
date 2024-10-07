@@ -1,9 +1,11 @@
 import asyncio
+from aiogram import types
 from datetime import datetime, timedelta
 import logging
 from bot.Utils.csv_utils import read_csv_data
 from bot.bot import bot
-from bot.config import config
+from bot.bd import session, User
+from bot.Utils.Record_Logs import RecordLogs
 
 logger = logging.getLogger("bot")
 
@@ -16,22 +18,38 @@ async def check_deadlines():
             try:
                 fio, bdate = entry.split(': ')
                 if bdate == today:
-                    message = f"🎉 Сегодня день рождения у {fio}!"
-                    await bot.send_message(config.CHAT_ID, text=message)
-                    logger.info(f"Отправлено сообщение: {message}")
+                    users = session.query(User).all()  # Получаем всех пользователей
+                    if users:
+                        message = f"🎉 Сегодня день рождения у {fio}!"
+                        for user in users:  # Перебираем всех пользователей и отправляем сообщение
+                            await bot.send_message(user.user_id, text=message)
+                            logger.info(f"Отправлено сообщение пользователю {user.user_id}: {message}")
+                    else:
+                        logger.warning(f"Нет пользователей в базе данных.")
             except ValueError:
                 logger.warning(f"Некорректный формат записи: {entry}")
+                RecordLogs.error_log(user.user_id, 'Некорректный формат записи')
     except FileNotFoundError:
         logger.error("Файл birthdays.csv не найден.")
+        RecordLogs.error_log(user.user_id,'Файл birthdays.csv не найден.')
     except Exception as e:
         logger.error(f"Произошла ошибка при проверке дедлайнов: {e}")
+        RecordLogs.error_log(user.user_id, 'Произошла ошибка при проверке дедлайнов')
 
 async def scheduled_check():
     logger.info("Бот запущен и начал проверку дедлайнов.")
     try:
-        await bot.send_message(config.CHAT_ID, text="🚀 Бот запущен и начал проверку дедлайнов!")
+        users = session.query(User).all()
+        for user in users:
+            try:
+                await bot.send_message(user.user_id, text="🚀 Бот запущен и начал проверку дедлайнов!")
+            except Exception as e:
+                logger.error(f"Не удалось отправить стартовое сообщение пользователю {user.user_id}: {e}")
+                RecordLogs.error_log(user.user_id, 'Не удалось отправить стартовое сообщение пользователю ')
     except Exception as e:
-        logger.error(f"Не удалось отправить стартовое сообщение: {e}")
+        logger.error(f"Ошибка при отправке стартовых сообщений: {e}")
+        RecordLogs.error_log(user.user_id, 'Ошибка при отправке стартовых сообщений')
+
     while True:
         await check_deadlines()
         now = datetime.now()

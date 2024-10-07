@@ -9,5 +9,4 @@ def setup_middlewares():
     dp.middleware.setup(RoleMiddleware())
 
 def setup_handlers():
-    # Все обработчики уже импортированы через Handlers/__init__.py
     pass
