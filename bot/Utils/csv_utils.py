@@ -14,8 +14,8 @@ def read_csv_data(file_path, data_type):
                     continue
                 fio = row[0].strip()
                 if data_type == 'users':
-                    username = row[1].strip()
-                    result.append(f"{fio}: @{username}")
+                    user_id = row[1].strip()
+                    result.append(f"{fio}: {user_id}")
                 elif data_type == 'birthdays':
                     bdate = row[1].strip()
                     result.append(f"{fio}: {bdate}")

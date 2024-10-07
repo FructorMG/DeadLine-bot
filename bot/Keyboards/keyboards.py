@@ -5,7 +5,7 @@ class KeyBoards:
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add('Список дней рождений', 'Добавить день рождения', 'Помощь')
 
-    # Административная клавиатура
+    # Клавиатура администратора
     admin_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     admin_keyboard.add('Список дней рождений', 'Добавить день рождения', 'Список пользователей')
 

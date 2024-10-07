@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 class RecordLogs:
     @staticmethod
     def log_admin_action(user_id: int, admin_action: str):

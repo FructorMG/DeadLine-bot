@@ -1,5 +1,3 @@
-# bot/bot.py
-
 from aiogram import Bot, Dispatcher
 from bot.config import config
 

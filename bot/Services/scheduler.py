@@ -1,5 +1,3 @@
-# bot/Services/scheduler.py
-
 import asyncio
 from datetime import datetime, timedelta
 import logging

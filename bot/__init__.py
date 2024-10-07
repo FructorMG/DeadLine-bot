@@ -1,5 +1,3 @@
-# bot/__init__.py
-
 from bot.bot import dp
 from bot.Middleware import RoleMiddleware
 from bot.Handlers import *

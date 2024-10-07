@@ -1,9 +1,7 @@
-# main.py
-
 import logging
 import asyncio
 from aiogram import executor
-from bot.bot import dp  # Импортируем уже настроенный диспетчер из bot.py
+from bot.bot import dp
 from bot import setup_middlewares, setup_handlers
 from bot.Services.scheduler import scheduled_check
 
