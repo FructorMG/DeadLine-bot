@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, Date
 from sqlalchemy.orm import declarative_base, sessionmaker
 from aiogram import types
 from bot.config import config
@@ -23,15 +23,12 @@ class User(Base):
         return f"<User(id={self.id}, username={self.name}, user_id={self.user_id})>"
 def user_exists(user_id: str) -> bool:
     return session.query(User).filter(User.user_id == user_id).first() is not None
-
-
 def new_user(username: str, user_id: str):
     if user_exists(user_id):
         return
     new_user = User(name=username, user_id=user_id)
     session.add(new_user)
     session.commit()
-
 
 async def get_all_users(message: types.Message):
     users = session.query(User).all()
@@ -40,4 +37,28 @@ async def get_all_users(message: types.Message):
         await message.reply(f"Список пользователей:\n{user_list}")
     else:
         await message.reply("В базе данных нет пользователей.")
+
+
+class Birthdays(Base):
+    __tablename__ = 'birthdays'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    birth_date = Column(Date, unique=True, nullable=False)
+    def __repr__(self):
+        return f"<User(id={self.id}, username={self.name}, date={self.birth_date})>"
+def birthdays_exists(birth_date: str) -> bool:
+    return session.query(Birthdays).filter(Birthdays.birth_date == birth_date).first() is not None
+
+from datetime import datetime
+
+async def get_all_birthdays(message: types.Message):
+    birthdays = session.query(Birthdays).all()
+    if birthdays:
+        birthday_list = "\n".join([ f"{b.name}, {b.birth_date.strftime('%d.%m')}" for b in birthdays])
+        await message.reply(f"Список дней рождений:\n{birthday_list}")
+    else:
+        await message.reply("В базе данных нет дней рождений.")
+
+
+
 

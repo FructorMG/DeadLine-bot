@@ -18,10 +18,10 @@ async def check_deadlines():
             try:
                 fio, bdate = entry.split(': ')
                 if bdate == today:
-                    users = session.query(User).all()  # Получаем всех пользователей
+                    users = session.query(User).all()
                     if users:
                         message = f"🎉 Сегодня день рождения у {fio}!"
-                        for user in users:  # Перебираем всех пользователей и отправляем сообщение
+                        for user in users:
                             await bot.send_message(user.user_id, text=message)
                             logger.info(f"Отправлено сообщение пользователю {user.user_id}: {message}")
                     else:

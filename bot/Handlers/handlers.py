@@ -5,7 +5,7 @@ from bot.Keyboards import KeyBoards
 from bot.Utils.csv_utils import read_csv_data
 from bot.Utils.Record_Logs import RecordLogs
 from bot.config import config
-from bot.bd.bd import new_user, get_all_users
+from bot.bd.bd import new_user, get_all_users, get_all_birthdays
 
 logger = logging.getLogger("bot")
 class Handlers:
@@ -13,7 +13,7 @@ class Handlers:
     @staticmethod
     async def send_welcome(message: types.Message):
         role = getattr(message, 'role', 'user')
-        user_id = str(message.from_user.id)  # Убедитесь, что user_id - строка
+        user_id = str(message.from_user.id)
         username = message.from_user.username
         logger.info(f"Пользователь {user_id} вызвал команду /start.")
         await message.reply("Привет! Я бот для уведомлений о днях рождения.", reply_markup=KeyBoards.get_keyboard(role))
@@ -49,20 +49,13 @@ class Handlers:
         role = getattr(message, 'role', 'user')
         logger.info(f"Пользователь {message.from_user.id} (роль {role}) запросил список дней рождений.")
         RecordLogs.log_user_action(message.from_user.id, "запросил список дней рождений.")
-
         try:
-            birthdays = read_csv_data('birthdays.csv', 'birthdays')
-            if birthdays:
-                await message.reply("Список дней рождений:\n" + "\n".join(birthdays), reply_markup=KeyBoards.get_keyboard(role))
-            else:
-                await message.reply("В списке нет дней рождений.", reply_markup=KeyBoards.get_keyboard(role))
-        except FileNotFoundError:
-            await message.reply("Файл birthdays.csv не найден.", reply_markup=KeyBoards.get_keyboard(role))
-            logger.error("Файл birthdays.csv не найден.")
+            await get_all_birthdays(message)
         except Exception as e:
-            await message.reply(f"Произошла ошибка: {e}", reply_markup=KeyBoards.get_keyboard(role))
+            #await message.reply(f"Произошла ошибка: {e}", reply_markup=KeyBoards.get_keyboard(role))
             logger.error(f"У пользователя {message.from_user.id} произошла ошибка: {e}")
-            RecordLogs.log_user_action(message.from_user.id, "произошла ошибка")
+            RecordLogs.log_user_action(message.from_user.id, f"произошла ошибка: {e}")
+
 
     @dp.message_handler(text='Список пользователей')
     @staticmethod
