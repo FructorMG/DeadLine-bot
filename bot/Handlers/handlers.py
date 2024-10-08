@@ -12,14 +12,24 @@ class Handlers:
     @dp.message_handler(commands=['start'])
     @staticmethod
     async def send_welcome(message: types.Message):
-        role = getattr(message, 'role', 'user')
+        #role = getattr(message, 'role', 'user')
+        #user_id = str(message.from_user.id)
+        #username = message.from_user.username
+        #logger.info(f"Пользователь {user_id} вызвал команду /start.")
+        await message.reply("Привет! Я бот для уведомлений о днях рождения.")
+        # В этот момент должно собираться имя + user_id.
+        #new_user(username, user_id)
+        #Создать клавиатуру выбора да, нет.(+)
+        await message.reply("Для продолжения необходимо пройти регистрацию. Продолжить?", reply_markup=KeyBoards.registration_keyboard)
+    @dp.message_handler(text = 'Да')
+    @staticmethod
+    async def start_registration(message:types.Message):
+        await message.answer(f'Начало регистрации')
         user_id = str(message.from_user.id)
         username = message.from_user.username
-        logger.info(f"Пользователь {user_id} вызвал команду /start.")
-        await message.reply("Привет! Я бот для уведомлений о днях рождения.", reply_markup=KeyBoards.get_keyboard(role))
-        # В этот момент должно собираться имя + user_id.
         new_user(username, user_id)
-        logger.info(f'Пользователь {user_id} - {username} вызвал команду /start.')
+        #Дописать сбор дня рождения и ФИО.
+
 
     @dp.message_handler(text='Помощь')
     @staticmethod
