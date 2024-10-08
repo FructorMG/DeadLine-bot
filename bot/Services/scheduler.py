@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import logging
 from bot.Utils.csv_utils import read_csv_data
 from bot.bot import bot
-import bot.bd
+from bot.bd import session, User
 from bot.Utils.Record_Logs import RecordLogs
 
 logger = logging.getLogger("bot")
@@ -18,11 +18,13 @@ async def check_deadlines():
             try:
                 fio, bdate = entry.split(': ')
                 if bdate == today:
-                    users = session.query(DataBase).all()
+
+                    users = session.query(User).all()
                     if users:
                         message = f"🎉 Сегодня день рождения у {fio}!"
+
                         for user in users:
-                            await bot.send_message(user.user_id, text=message)
+                            await bot.send_message(user.user_id, text = message)
                             logger.info(f"Отправлено сообщение пользователю {user.user_id}: {message}")
                     else:
                         logger.warning(f"Нет пользователей в базе данных.")
@@ -39,10 +41,10 @@ async def check_deadlines():
 async def scheduled_check():
     logger.info("Бот запущен и начал проверку дедлайнов.")
     try:
-        users = session.query(DataBase).all()
+        users = session.query(User).all()
         for user in users:
             try:
-                await bot.send_message(user.user_id, text="🚀 Бот запущен и начал проверку дедлайнов!")
+                await bot.send_message(user.user_id, text = "🚀 Бот запущен и начал проверку дедлайнов!")
             except Exception as e:
                 logger.error(f"Не удалось отправить стартовое сообщение пользователю {user.user_id}: {e}")
                 RecordLogs.error_log(user.user_id, 'Не удалось отправить стартовое сообщение пользователю ')

@@ -3,7 +3,7 @@ from aiogram.types import ReplyKeyboardMarkup
 class KeyBoards:
     # Основная клавиатура
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add('Список дней рождений').add('Добавить день рождения'.add('Помощь')
+    keyboard.add('Список дней рождений').add('Добавить день рождения').add('Помощь')
 
     # Клавиатура администратора
     admin_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
