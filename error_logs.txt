@@ -14,3 +14,12 @@
 2024-10-08 03:49:24 - Пользователь 918063446  ОШИБКА:Не удалось отправить стартовое сообщение пользователю 
 2024-10-08 03:51:05 - Пользователь 918063446  ОШИБКА:Не удалось отправить стартовое сообщение пользователю 
 2024-10-08 03:53:40 - Пользователь 918063446  ОШИБКА:Не удалось отправить стартовое сообщение пользователю 
+2024-10-08 15:32:58 - Пользователь None  ОШИБКА:Произошла ошибка при проверке дней рождения: (psycopg2.errors.InvalidDatetimeFormat) ОШИБКА:  неверный синтаксис для типа date: "08.10"
+LINE 3: WHERE users.birthday_date = '08.10'
+                                    ^
+
+[SQL: SELECT users.id AS users_id, users.name AS users_name, users.birthday_date AS users_birthday_date, users.user_id AS users_user_id, users.user_username AS users_user_username 
+FROM users 
+WHERE users.birthday_date = %(birthday_date_1)s]
+[parameters: {'birthday_date_1': '08.10'}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)

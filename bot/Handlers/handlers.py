@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from datetime import datetime
 from bot.bot import dp
-from bot.bd import new_user, get_all_users, get_all_birthdays, user_exists
+from bot.bd import get_all_users, get_all_birthdays, user_exists, new_user
 from bot.Keyboards import KeyBoards
 from bot.config import config
 from bot.Utils.Record_Logs import RecordLogs
@@ -27,46 +27,38 @@ class Handlers:
     async def send_welcome(message: types.Message, state: FSMContext, role: str = 'user'):
         await message.reply("Привет! Я бот для уведомлений о днях рождения.\n Для продолжения необходимо пройти регистрацию. Продолжить?",
                             reply_markup = KeyBoards.registration_keyboard)
-        logger.info(f"Пользователь {message.from_user.id} вызвал команду /start и получил запрос на регистрацию с ролью {role}.")
 
-    @dp.message_handler(Text(equals = 'Да', ignore_case = True))
+    @dp.message_handler(Text(equals='Да', ignore_case=True))
     @staticmethod
-    async def start_registration(message: types.Message, state: FSMContext, role: str = 'user'):
+    async def start_registration(message: types.Message, role: str):
         user_id = message.from_user.id
-        username = message.from_user.username or "unknown"
         if user_exists(user_id):
             await message.reply("Вы уже зарегистрированы.", reply_markup=KeyBoards.get_keyboard(role))
             logger.info(f"Пользователь {user_id} попытался зарегистрироваться повторно.")
             return
 
-        await message.reply("Введите ваше имя:")
+        await message.reply("Введите ваше имя:", reply_markup=KeyBoards.cansel_keyboard)
         await RegisterUser.waiting_for_name.set()
         logger.info(f"Начата регистрация для пользователя {user_id}.")
 
-    @dp.message_handler(Text(equals = 'Нет', ignore_case = True))
+    @dp.message_handler(Text(equals='Отменить', ignore_case=True))
+    @dp.message_handler(Text(equals='Отмена', ignore_case=True))
     @staticmethod
-    async def cancel_registration_start(message: types.Message, state: FSMContext, role: str = 'user'):
-        await message.reply("Регистрация отменена.", reply_markup=KeyBoards.get_keyboard(role))
-        logger.info(f"Пользователь {message.from_user.id} отменил регистрацию на старте.")
-
-    @dp.message_handler(commands = ['cancel'])
-    @dp.message_handler(Text(equals = 'Отмена', ignore_case = True))
-    @staticmethod
-    async def cancel_registration(message: types.Message, state: FSMContext, role: str):
+    async def cancel_registration(message: types.Message, state: FSMContext):
         current_state = await state.get_state()
-        if current_state is None:
-            await message.reply("Нет активной регистрации.", reply_markup = KeyBoards.get_keyboard(role))
-            return
-        await state.finish()
-        await message.reply("Регистрация отменена.", reply_markup = KeyBoards.get_keyboard(role))
-        logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
+        if current_state is not None:
+            await state.finish()
+            await message.reply(reply_markup=types.ReplyKeyboardRemove())
+            logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
+        else:
+            await message.reply('До встречи! Я всегда тут, просто нажми /start',reply_markup=types.ReplyKeyboardRemove())
 
     @dp.message_handler(state = RegisterUser.waiting_for_name, content_types = types.ContentTypes.TEXT)
     @staticmethod
     async def process_name(message: types.Message, state: FSMContext):
         name = message.text.strip()
         if not name:
-            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:")
+            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:", reply_markup=KeyBoards.get_keyboard(role))
             return
         await state.update_data(name = name)
         await message.reply("Введите вашу дату рождения в формате ДД.ММ.ГГГГ:")

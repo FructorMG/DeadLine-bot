@@ -23,19 +23,16 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False)
+    name = Column(String(30), nullable=False)
     birthday_date = Column(Date)
     user_id = Column(BigInteger, nullable=False)
-    user_username = Column(String(50), unique=True, nullable=False)
+    user_username = Column(String(30), unique=True, nullable=False)
 
     def __repr__(self):
         return (f'<User(id={self.id}, name={self.name}, user_id={self.user_id}, '
                 f'user_username={self.user_username}, birthday_date={self.birthday_date})>')
 
 Base.metadata.create_all(engine)
-
-def user_exists(user_id: int) -> bool:
-    return session.query(User).filter(User.user_id == user_id).first() is not None
 
 def new_user(name: str, user_id: int, birthday_date: datetime.date, user_username: str):
     if user_exists(user_id):
@@ -45,6 +42,9 @@ def new_user(name: str, user_id: int, birthday_date: datetime.date, user_usernam
     session.add(new_user)
     session.commit()
     logger.info(f"Добавлен новый пользователь: {new_user}")
+
+def user_exists(user_id: int) -> bool:
+    return session.query(User).filter(User.user_id == user_id).first() is not None
 
 async def get_all_users(message: types.Message):
     users = session.query(User).all()
@@ -61,3 +61,8 @@ async def get_all_birthdays(message: types.Message):
         await message.reply(f"Список дней рождений:\n{birthday_list}")
     else:
         await message.reply("В базе данных нет дней рождений.")
+
+
+
+
+

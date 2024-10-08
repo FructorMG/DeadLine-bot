@@ -13,6 +13,9 @@ class KeyBoards:
     registration_keyboard = ReplyKeyboardMarkup(resize_keyboard = True)
     registration_keyboard.add('Да').add('Нет')
 
+    cansel_keyboard = ReplyKeyboardMarkup(resize_keyboard = True)
+    cansel_keyboard.add("Отменить")
+
     @classmethod
     def get_keyboard(cls, role: str) -> ReplyKeyboardMarkup:
         if role == 'admin':

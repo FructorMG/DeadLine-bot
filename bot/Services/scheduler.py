@@ -9,34 +9,30 @@ from bot.Utils.Record_Logs import RecordLogs
 
 logger = logging.getLogger("bot")
 
+from datetime import datetime
+
+
 async def check_deadlines():
-    today = datetime.now().strftime("%d.%m")
+    today = datetime.now().strftime("%d.%m")  # Получаем текущую дату в формате "день.месяц"
     logger.info(f"Проверка дней рождения на дату: {today}")
     try:
-        birthdays = read_csv_data('birthdays.csv', 'birthdays')
-        for entry in birthdays:
-            try:
-                fio, bdate = entry.split(': ')
-                if bdate == today:
+        today_date = datetime.now().date()
+        birthday_date_str = today_date.strftime("%Y-%m-%d")
 
-                    users = session.query(User).all()
-                    if users:
-                        message = f"🎉 Сегодня день рождения у {fio}!"
-
-                        for user in users:
-                            await bot.send_message(user.user_id, text = message)
-                            logger.info(f"Отправлено сообщение пользователю {user.user_id}: {message}")
-                    else:
-                        logger.warning(f"Нет пользователей в базе данных.")
-            except ValueError:
-                logger.warning(f"Некорректный формат записи: {entry}")
-                RecordLogs.error_log(user.user_id, 'Некорректный формат записи')
-    except FileNotFoundError:
-        logger.error("Файл birthdays.csv не найден.")
-        RecordLogs.error_log(user.user_id,'Файл birthdays.csv не найден.')
+        users_with_birthdays = session.query(User).filter(User.birthday_date == birthday_date_str).all()
+        if users_with_birthdays:
+            for user in users_with_birthdays:
+                message = f"🎉 Сегодня день рождения у {user.name}!"
+                users = session.query(User).all()
+                for recipient in users:
+                    await bot.send_message(recipient.user_id, text=message)
+                    logger.info(f"Отправлено сообщение пользователю {recipient.user_id}: {message}")
+        else:
+            logger.info("Сегодня нет пользователей с днями рождения.")
     except Exception as e:
-        logger.error(f"Произошла ошибка при проверке дедлайнов: {e}")
-        RecordLogs.error_log(user.user_id, 'Произошла ошибка при проверке дедлайнов')
+        logger.error(f"Произошла ошибка при проверке дней рождения: {e}")
+        RecordLogs.error_log(None, f'Произошла ошибка при проверке дней рождения: {e}')
+
 
 async def scheduled_check():
     logger.info("Бот запущен и начал проверку дедлайнов.")
@@ -44,7 +40,7 @@ async def scheduled_check():
         users = session.query(User).all()
         for user in users:
             try:
-                await bot.send_message(user.user_id, text = "🚀 Бот запущен и начал проверку дедлайнов!")
+                await bot.send_message(user.user_id, text="🚀 Бот запущен и начал проверку дедлайнов!")
             except Exception as e:
                 logger.error(f"Не удалось отправить стартовое сообщение пользователю {user.user_id}: {e}")
                 RecordLogs.error_log(user.user_id, 'Не удалось отправить стартовое сообщение пользователю ')
