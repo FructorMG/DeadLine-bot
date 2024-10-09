@@ -29,7 +29,7 @@ class SuperUserRegistration:
 
     @staticmethod
     @dp.message_handler(Text(equals="Отменить", ignore_case=True))
-    async def cancel_registration(message: types.Message, state: FSMContext):
+    async def cancel_registration(message: types.Message, state: FSMContext, role:str):
         current_state = await state.get_state()
         if current_state is not None:
             await state.finish()
@@ -40,8 +40,8 @@ class SuperUserRegistration:
             logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
         else:
             await message.reply(
-                "До встречи! Я всегда тут, просто нажми /start",
-                reply_markup=types.ReplyKeyboardRemove()
+                "Отмена операции",
+                reply_markup=KeyBoards.get_keyboard((role))
             )
 
     @staticmethod
@@ -49,7 +49,7 @@ class SuperUserRegistration:
     async def process_name(message: types.Message, state: FSMContext):
         name = message.text.strip()
         if not name:
-            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.cancel_keyboard())
+            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.cancel_keyboard)
             return
         await state.update_data(name=name)
         await message.reply("Введите рождения в формате ДД.ММ.ГГГГ:")
@@ -63,7 +63,7 @@ class SuperUserRegistration:
         try:
             birthday = datetime.strptime(birthday_str, "%d.%m.%Y").date()
         except ValueError:
-            await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup=KeyBoards.cancel_keyboard())
+            await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup=KeyBoards.cancel_keyboard)
             logger.warning(f"Пользователь {message.from_user.id} ввел некорректную дату: '{birthday_str}'.")
             return
         user_data = await state.get_data()

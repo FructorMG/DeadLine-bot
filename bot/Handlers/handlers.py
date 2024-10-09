@@ -26,26 +26,18 @@ class Handlers:
         )
         logger.info(f"Пользователь {message.from_user.id} запросил помощь.")
 
-    #@dp.message_handler(text = "Добавить день рождения")
-    #@staticmethod
-    #async def add_birthday(message: types.Message, role: str):
-    #    if role == "super_users":
-    #        await message.reply("Функция добавления дня рождения пока не реализована.", reply_markup = KeyBoards.get_keyboard(role))
-    #        logger.info(f"Суперпользователь {message.from_user.id} попытался добавить день рождения.")
-    #    else:
-    #        await message.reply("Для доступа к этому разделу необходима подписка уровня SUPER_USER.", reply_markup = KeyBoards.get_keyboard(role))
-    #        logger.warning(f"Пользователь {message.from_user.id} без прав пытался добавить день рождения.")
-
     @dp.message_handler(text = "Список дней рождений")
     @staticmethod
     async def birthdays_list(message: types.Message, role: str):
         logger.info(f"Пользователь {message.from_user.id} (роль {role}) запросил список дней рождений.")
         RecordLogs.log_user_action(message.from_user.id, "запросил список дней рождений.")
         try:
-            if role == "super_user":
+            if role == "super_users":
+                #await message.reply(f"2")
                 await get_all_birthdays(message)
                 await Sup_get_all_birthdays(message)
             else:
+                #await message.reply(f"1")
                 await get_all_birthdays(message)
         except Exception as e:
             await message.reply(f"Произошла ошибка: {e}", reply_markup = KeyBoards.get_keyboard(role))

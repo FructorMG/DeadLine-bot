@@ -82,15 +82,42 @@ def new_sup_user(name: str, super_user_id: int, birthday_date: datetime.date):
     session.commit()
     logger.info(f"Добавлен новый пользователь: {new_user}")
 
-async def Sup_get_all_birthdays(message: types.Message):
-    user_id = message.from_user.id
-    birthdays = session.query(SuperUser).filter(SuperUser.birthday_date.isnot(None), SuperUser.super_user_id == user_id).all()
 
-    if birthdays:
-        birthday_list = "\n".join([f"{b.name}, {b.birthday_date.strftime('%d.%m')}" for b in birthdays])
-        await message.reply(f"Список ваших дней рождений:\n{birthday_list}")
-    else:
-        await message.reply("Для вас нет доступных дней рождений.")
+async def Sup_get_all_birthdays(message: types.Message):
+    super_user_id = message.from_user.id
+    logger.info(f"Начало получения списка дней рождений для super_user_id={super_user_id}")
+    try:
+        # Попытка выполнить запрос к базе данных
+        try:
+            birthdays = session.query(SuperUser).filter(
+                SuperUser.birthday_date.isnot(None),
+                SuperUser.super_user_id == super_user_id
+            ).all()
+            logger.info(f"Запрос к БД выполнен успешно. Найдено {len(birthdays)} записей.")
+        except Exception as db_query_error:
+            logger.error(f"Ошибка при выполнении запроса к БД: {db_query_error}")
+            await message.reply("Произошла ошибка при получении данных из базы данных.")
+            return
+        # Обработка результатов запроса
+        try:
+            if birthdays:
+                birthday_list = "\n".join([
+                    f"{b.name}, {b.birthday_date.strftime('%d.%m')}" for b in birthdays
+                ])
+                await message.reply(f"Список ваших дней рождений:\n{birthday_list}")
+                logger.info(f"Отправлен список дней рождений пользователю {super_user_id}.")
+            else:
+                await message.reply("Для вас нет доступных дней рождений.")
+                logger.info(f"Пользователю {super_user_id} не найдено дней рождений.")
+        except Exception as processing_error:
+            logger.error(f"Ошибка при обработке результатов запроса: {processing_error}")
+            await message.reply("Произошла ошибка при обработке данных.")
+
+    except Exception as e:
+        # Общий блок для отлова непредвиденных ошибок
+        logger.exception(f"Непредвиденная ошибка в Sup_get_all_birthdays: {e}")
+        await message.reply("Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.")
+
 
 
 
