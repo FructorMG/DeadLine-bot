@@ -12,10 +12,10 @@ class RoleMiddleware(BaseMiddleware):
     async def on_process_message(self, message: Message, data: dict):
         user_id = message.from_user.id
         if user_id in config.admins_list:
-            data['role'] = 'admin'
+            data["role"] = "admin"
         elif user_id in config.assistants_list:
-            data['role'] = 'assistant'
+            data["role"] = "assistant"
         elif user_id in config.super_users_list:
-            data['role'] = 'super_users'
+            data["role"] = "super_users"
         else:
-            data['role'] = 'user'
+            data["role"] = "user"

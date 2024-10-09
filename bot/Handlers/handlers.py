@@ -1,130 +1,61 @@
 import logging
-from aiogram import types, Dispatcher
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher.filters import Text
-from datetime import datetime
+from aiogram import types
 from bot.bot import dp
-from bot.bd import get_all_users, get_all_birthdays, user_exists, new_user
+from bot.bd import get_all_users, get_all_birthdays, Sup_get_all_birthdays
 from bot.Keyboards import KeyBoards
 from bot.config import config
 from bot.Utils.Record_Logs import RecordLogs
+from bot.Handlers.user_registration import UserRegistration
+from bot.Handlers.super_user_registration import SuperUserRegistration
 
-logger = logging.getLogger("bot.handlers")
-logger.setLevel(logging.INFO)
+logger = logging.getLogger("bot.handler")
 handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
-logger.addHandler(handler)
 
-class RegisterUser(StatesGroup):
-    waiting_for_name = State()
-    waiting_for_birthday = State()
-
+def setup_handlers():
+    UserRegistration()
+    SuperUserRegistration()
 class Handlers:
-    @dp.message_handler(commands = ['start'])
+    @dp.message_handler(text = "Помощь")
     @staticmethod
-    async def send_welcome(message: types.Message, state: FSMContext, role: str = 'user'):
-        await message.reply("Привет! Я бот для уведомлений о днях рождения.\n Для продолжения необходимо пройти регистрацию. Продолжить?",
-                            reply_markup = KeyBoards.registration_keyboard)
-
-    @dp.message_handler(Text(equals='Да', ignore_case=True))
-    @staticmethod
-    async def start_registration(message: types.Message, role: str):
-        user_id = message.from_user.id
-        if user_exists(user_id):
-            await message.reply("Вы уже зарегистрированы.", reply_markup=KeyBoards.get_keyboard(role))
-            logger.info(f"Пользователь {user_id} попытался зарегистрироваться повторно.")
-            return
-
-        await message.reply("Введите ваше имя:", reply_markup=KeyBoards.cansel_keyboard)
-        await RegisterUser.waiting_for_name.set()
-        logger.info(f"Начата регистрация для пользователя {user_id}.")
-
-    @dp.message_handler(Text(equals='Отменить', ignore_case=True))
-    @dp.message_handler(Text(equals='Отмена', ignore_case=True))
-    @staticmethod
-    async def cancel_registration(message: types.Message, state: FSMContext):
-        current_state = await state.get_state()
-        if current_state is not None:
-            await state.finish()
-            await message.reply(reply_markup=types.ReplyKeyboardRemove())
-            logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
-        else:
-            await message.reply('До встречи! Я всегда тут, просто нажми /start',reply_markup=types.ReplyKeyboardRemove())
-
-    @dp.message_handler(state = RegisterUser.waiting_for_name, content_types = types.ContentTypes.TEXT)
-    @staticmethod
-    async def process_name(message: types.Message, state: FSMContext):
-        name = message.text.strip()
-        if not name:
-            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:", reply_markup=KeyBoards.get_keyboard(role))
-            return
-        await state.update_data(name = name)
-        await message.reply("Введите вашу дату рождения в формате ДД.ММ.ГГГГ:")
-        await RegisterUser.waiting_for_birthday.set()
-        logger.info(f"Пользователь {message.from_user.id} ввел имя: {name}.")
-
-    @dp.message_handler(state = RegisterUser.waiting_for_birthday, content_types = types.ContentTypes.TEXT)
-    @staticmethod
-    async def process_birthday(message: types.Message, state: FSMContext, role: str = 'user'):
-        birthday_str = message.text.strip()
-        try:
-            birthday = datetime.strptime(birthday_str, '%d.%m.%Y').date()
-        except ValueError:
-            await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:")
-            logger.warning(f"Пользователь {message.from_user.id} ввел некорректную дату: '{birthday_str}'.")
-            return
-        user_data = await state.get_data()
-        name = user_data.get('name')
-        user_id = message.from_user.id
-        user_username = message.from_user.username or "unknown"
-        if user_exists(user_id):
-            await message.reply("Вы уже зарегистрированы.", reply_markup = KeyBoards.get_keyboard(role))
-            logger.info(f"Пользователь {user_id} попытался зарегистрироваться повторно.")
-        else:
-            new_user(name = name, user_id = user_id, birthday_date = birthday, user_username = user_username)
-            await message.reply(f"Регистрация завершена!\nИмя: {name}\nДата рождения: {birthday.strftime('%d.%m.%Y')}", reply_markup = KeyBoards.get_keyboard(role)
-            )
-            logger.info(f"Пользователь {user_id} успешно зарегистрирован с именем '{name}' и датой рождения {birthday}.")
-        await state.finish()
-
-    @dp.message_handler(text = 'Помощь')
-    @staticmethod
-    async def support(message: types.Message, role: str = 'user'):
+    async def support(message: types.Message, role: str = "user"):
         assistants = ", ".join([str(id_) for id_ in config.assistants_list])
-        await message.reply(f'Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {assistants}.',
+        await message.reply(f"Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {assistants}.",
                             reply_markup = KeyBoards.get_keyboard(role)
         )
         logger.info(f"Пользователь {message.from_user.id} запросил помощь.")
 
-    @dp.message_handler(text = 'Добавить день рождения')
-    @staticmethod
-    async def add_birthday(message: types.Message, role: str):
-        if role == 'super_users':
-            await message.reply("Функция добавления дня рождения пока не реализована.", reply_markup = KeyBoards.get_keyboard(role))
-            logger.info(f"Суперпользователь {message.from_user.id} попытался добавить день рождения.")
-        else:
-            await message.reply("Для доступа к этому разделу необходима подписка уровня SUPER_USER.", reply_markup=KeyBoards.get_keyboard(role))
-            logger.warning(f"Пользователь {message.from_user.id} без прав пытался добавить день рождения.")
+    #@dp.message_handler(text = "Добавить день рождения")
+    #@staticmethod
+    #async def add_birthday(message: types.Message, role: str):
+    #    if role == "super_users":
+    #        await message.reply("Функция добавления дня рождения пока не реализована.", reply_markup = KeyBoards.get_keyboard(role))
+    #        logger.info(f"Суперпользователь {message.from_user.id} попытался добавить день рождения.")
+    #    else:
+    #        await message.reply("Для доступа к этому разделу необходима подписка уровня SUPER_USER.", reply_markup = KeyBoards.get_keyboard(role))
+    #        logger.warning(f"Пользователь {message.from_user.id} без прав пытался добавить день рождения.")
 
-    @dp.message_handler(text='Список дней рождений')
+    @dp.message_handler(text = "Список дней рождений")
     @staticmethod
-    async def birthdays_list(message: types.Message,role: str):
-        print(role)
+    async def birthdays_list(message: types.Message, role: str):
         logger.info(f"Пользователь {message.from_user.id} (роль {role}) запросил список дней рождений.")
         RecordLogs.log_user_action(message.from_user.id, "запросил список дней рождений.")
         try:
-            await get_all_birthdays(message)
+            if role == "super_user":
+                await get_all_birthdays(message)
+                await Sup_get_all_birthdays(message)
+            else:
+                await get_all_birthdays(message)
         except Exception as e:
-            # await message.reply(f"Произошла ошибка: {e}", reply_markup=KeyBoards.get_keyboard(role))
+            await message.reply(f"Произошла ошибка: {e}", reply_markup = KeyBoards.get_keyboard(role))
             logger.error(f"У пользователя {message.from_user.id} произошла ошибка: {e}")
             RecordLogs.log_user_action(message.from_user.id, f"произошла ошибка: {e}")
 
-    @dp.message_handler(text='Список пользователей')
+    @dp.message_handler(text = "Список пользователей")
     @staticmethod
-    async def users_list(message: types.Message,role: str):
-        if role != 'admin':
+    async def users_list(message: types.Message, role: str):
+        if role != "admin":
             await message.reply("У вас нет доступа к этому разделу.", reply_markup = KeyBoards.get_keyboard(role))
             logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.")
             RecordLogs.log_user_action(message.from_user.id, "попытался получить доступ к списку пользователей.")
@@ -140,4 +71,8 @@ class Handlers:
             await message.reply(f"Произошла ошибка: {e}", reply_markup = KeyBoards.get_keyboard(role))
             logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
             RecordLogs.log_admin_action(message.from_user.id, "произошла ошибка")
-
+    # @dp.message_handler(command = ['/block'])
+    # @staticmethod
+    # async def user_block(message: types.Message, role: str):
+    #     if role != 'admin':
+    #         await message.reply("У вас нет доступа к этой команде.", reply_markup = KeyBoards.get_keyboard(role))

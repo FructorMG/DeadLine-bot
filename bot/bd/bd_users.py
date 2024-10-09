@@ -62,6 +62,37 @@ async def get_all_birthdays(message: types.Message):
     else:
         await message.reply("В базе данных нет дней рождений.")
 
+Base = declarative_base()
+
+class SuperUser(Base):
+    __tablename__ = 'super_users'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    birthday_date = Column(Date, nullable=False)
+    super_user_id = Column(BigInteger, unique=True, nullable=False)
+
+    def __repr__(self):
+        return f"<SuperUser(id={self.id}, name={self.name}, birthday_date={self.birthday_date}, super_user_id={self.super_user_id})>"
+
+Base.metadata.create_all(engine)
+
+def new_sup_user(name: str, super_user_id: int, birthday_date: datetime.date):
+    new_user = SuperUser(name = name, super_user_id = super_user_id, birthday_date = birthday_date)
+    session.add(new_user)
+    session.commit()
+    logger.info(f"Добавлен новый пользователь: {new_user}")
+
+async def Sup_get_all_birthdays(message: types.Message):
+    user_id = message.from_user.id
+    birthdays = session.query(SuperUser).filter(SuperUser.birthday_date.isnot(None), SuperUser.super_user_id == user_id).all()
+
+    if birthdays:
+        birthday_list = "\n".join([f"{b.name}, {b.birthday_date.strftime('%d.%m')}" for b in birthdays])
+        await message.reply(f"Список ваших дней рождений:\n{birthday_list}")
+    else:
+        await message.reply("Для вас нет доступных дней рождений.")
+
+
 
 
 

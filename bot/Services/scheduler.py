@@ -2,18 +2,14 @@ import asyncio
 from aiogram import types
 from datetime import datetime, timedelta
 import logging
-from bot.Utils.csv_utils import read_csv_data
 from bot.bot import bot
 from bot.bd import session, User
 from bot.Utils.Record_Logs import RecordLogs
 
 logger = logging.getLogger("bot")
 
-from datetime import datetime
-
-
 async def check_deadlines():
-    today = datetime.now().strftime("%d.%m")  # Получаем текущую дату в формате "день.месяц"
+    today = datetime.now().strftime("%d.%m")
     logger.info(f"Проверка дней рождения на дату: {today}")
     try:
         today_date = datetime.now().date()
@@ -31,7 +27,7 @@ async def check_deadlines():
             logger.info("Сегодня нет пользователей с днями рождения.")
     except Exception as e:
         logger.error(f"Произошла ошибка при проверке дней рождения: {e}")
-        RecordLogs.error_log(None, f'Произошла ошибка при проверке дней рождения: {e}')
+        RecordLogs.error_log(None, f"Произошла ошибка при проверке дней рождения: {e}")
 
 
 async def scheduled_check():
@@ -40,13 +36,14 @@ async def scheduled_check():
         users = session.query(User).all()
         for user in users:
             try:
-                await bot.send_message(user.user_id, text="🚀 Бот запущен и начал проверку дедлайнов!")
+                print("1")
+                #await bot.send_message(user.user_id, text="🚀 Бот запущен и начал проверку дедлайнов!")
             except Exception as e:
-                logger.error(f"Не удалось отправить стартовое сообщение пользователю {user.user_id}: {e}")
-                RecordLogs.error_log(user.user_id, 'Не удалось отправить стартовое сообщение пользователю ')
+                logger.error(f"Не удалось отправить стартовое сообщение пользователю {User.user_id}: {e}")
+                RecordLogs.error_log(user.user_id, "Не удалось отправить стартовое сообщение пользователю ")
     except Exception as e:
         logger.error(f"Ошибка при отправке стартовых сообщений: {e}")
-        RecordLogs.error_log(user.user_id, 'Ошибка при отправке стартовых сообщений')
+        RecordLogs.error_log(User.user_id, "Ошибка при отправке стартовых сообщений")
 
     while True:
         await check_deadlines()
