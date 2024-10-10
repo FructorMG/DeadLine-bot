@@ -23,3 +23,4 @@ FROM users
 WHERE users.birthday_date = %(birthday_date_1)s]
 [parameters: {'birthday_date_1': '08.10'}]
 (Background on this error at: https://sqlalche.me/e/20/9h9h)
+2024-10-10 15:38:39 - Пользователь None  ОШИБКА:Произошла ошибка при проверке дней рождения: 'SuperUser' object has no attribute 'user_id'

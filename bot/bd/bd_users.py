@@ -107,7 +107,7 @@ async def Sup_get_all_birthdays(message: types.Message):
                 await message.reply(f"Список ваших дней рождений:\n{birthday_list}")
                 logger.info(f"Отправлен список дней рождений пользователю {super_user_id}.")
             else:
-                await message.reply("Для вас нет доступных дней рождений.")
+                await message.reply("Вы не добавили ни одного дня рождения.")
                 logger.info(f"Пользователю {super_user_id} не найдено дней рождений.")
         except Exception as processing_error:
             logger.error(f"Ошибка при обработке результатов запроса: {processing_error}")

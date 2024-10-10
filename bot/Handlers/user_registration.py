@@ -20,23 +20,17 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-
-# Определение состояний регистрации пользователя
 class UserRegister(StatesGroup):
     waiting_for_name = State()
     waiting_for_birthday = State()
 
 
-# Класс для обработки регистрации пользователя
 class UserRegistration:
 
     @dp.message_handler(commands=["start"])
     @staticmethod
     async def send_welcome(message: types.Message):
-        await message.reply(
-            "Привет! Я бот для уведомлений о днях рождения.\nДля продолжения необходимо пройти регистрацию. Продолжить?",
-            reply_markup=KeyBoards.registration_keyboard
-        )
+        await message.reply("Привет! Я бот для уведомлений о днях рождения.\nДля продолжения необходимо пройти регистрацию. Продолжить?",reply_markup=KeyBoards.registration_keyboard)
 
     @dp.message_handler(Text(equals="Да", ignore_case=True))
     @staticmethod
@@ -55,10 +49,7 @@ class UserRegistration:
     @dp.message_handler(Text(equals="Нет", ignore_case=True))
     @staticmethod
     async def handle_no_response(message: types.Message):
-        await message.reply(
-            "До встречи! Я всегда тут, просто нажми /start",
-            reply_markup=types.ReplyKeyboardRemove()
-        )
+        await message.reply("До встречи! Я всегда тут, просто нажми /start",reply_markup=types.ReplyKeyboardRemove())
         logger.info(f"Пользователь {message.from_user.id} отменил регистрацию, выбрав 'Нет'.")
 
     @dp.message_handler(Text(equals="Отменить регистрацию", ignore_case=True),state="*")
@@ -67,26 +58,17 @@ class UserRegistration:
         current_state = await state.get_state()
         if current_state is not None:
             await state.finish()
-            await message.reply(
-                "До встречи! Я всегда тут, просто нажми /start",
-                reply_markup=types.ReplyKeyboardRemove()
-            )
+            await message.reply("До встречи! Я всегда тут, просто нажми /start",reply_markup=types.ReplyKeyboardRemove())
             logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
         else:
-            await message.reply(
-                "До встречи! Я всегда тут, просто нажми /start",
-                reply_markup=types.ReplyKeyboardRemove()
-            )
+            await message.reply("До встречи! Я всегда тут, просто нажми /start",reply_markup=types.ReplyKeyboardRemove() )
     @dp.message_handler(state=UserRegister.waiting_for_name, content_types=types.ContentTypes.TEXT)
     @staticmethod
     async def process_name(message: types.Message, state: FSMContext):
         name = message.text.strip()
         user_id = message.from_user.id
         if not name:
-            await message.reply(
-                "Имя не может быть пустым. Пожалуйста, введите ваше имя:",
-                reply_markup=KeyBoards.cancel_reg_keyboard
-            )
+            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.cancel_reg_keyboard)
             logger.warning(f"Пользователь {user_id} отправил пустое имя.")
             return
         parsed = morph.parse(name)
@@ -97,20 +79,14 @@ class UserRegistration:
             )
             logger.warning(f"Пользователь {user_id} отправил нераспознаваемое имя: '{name}'.")
             return
-        # Проверка, является ли слово именем
         is_name = any('Name' in p.tag for p in parsed)
         if not is_name:
-            await message.reply(
-                "Пожалуйста, введите корректное имя:",
-                reply_markup=KeyBoards.cancel_reg_keyboard
-            )
+            await message.reply("Пожалуйста, введите корректное имя:",reply_markup=KeyBoards.cancel_reg_keyboard)
             logger.warning(f"Пользователь {user_id} отправил некорректное имя: '{name}'.")
             return
 
-        # Сохранение имени пользователя в состоянии
         await state.update_data(name=name)
         logger.info(f"Пользователь {user_id} ввел имя: {name}.")
-        # Запрос даты рождения
         await message.reply("Введите вашу дату рождения в формате ДД.ММ.ГГГГ:", reply_markup=KeyBoards.cancel_reg_keyboard)
         await UserRegister.waiting_for_birthday.set()
 
@@ -122,10 +98,7 @@ class UserRegistration:
         try:
             birthday = datetime.strptime(birthday_str, "%d.%m.%Y").date()
         except ValueError:
-            await message.reply(
-                "Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:",
-                reply_markup=KeyBoards.cancel_reg_keyboard
-            )
+            await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup=KeyBoards.cancel_reg_keyboard)
             logger.warning(f"Пользователь {user_id} ввел некорректную дату: '{birthday_str}'.")
             return
 
@@ -143,11 +116,6 @@ class UserRegistration:
                 birthday_date=birthday,
                 user_username=user_username
             )
-            await message.reply(
-                f"Регистрация завершена!\nИмя: {name}\nДата рождения: {birthday.strftime('%d.%m.%Y')}",
-                reply_markup=KeyBoards.get_keyboard(role)
-            )
-            logger.info(
-                f"Пользователь {user_id} успешно зарегистрирован с именем '{name}' и датой рождения {birthday}."
-            )
+            await message.reply(f"Регистрация завершена!\nИмя: {name}\nДата рождения: {birthday.strftime('%d.%m.%Y')}",reply_markup=KeyBoards.get_keyboard(role))
+            logger.info(f"Пользователь {user_id} успешно зарегистрирован с именем '{name}' и датой рождения {birthday}.")
         await state.finish()

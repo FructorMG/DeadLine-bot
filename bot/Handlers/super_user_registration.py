@@ -5,13 +5,19 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from datetime import datetime
 from bot.bot import dp
-from bot.bd import new_sup_user
+from bot.bd import new_sup_user, SuperUser
 from bot.Keyboards import KeyBoards
+import pymorphy3
+
+# Инициализация MorphAnalyzer
+morph = pymorphy3.MorphAnalyzer()
+
 
 logger = logging.getLogger("bot.super_user_registration")
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
+
 
 class SuperUserRegister(StatesGroup):
     waiting_for_name = State()
@@ -21,11 +27,16 @@ class SuperUserRegistration:
 
     @staticmethod
     @dp.message_handler(Text(equals="Добавить день рождения", ignore_case=True))
-    async def add_birthday_button_pressed(message: types.Message):
+    async def add_birthday_button_pressed(message: types.Message, role:str):
         user_id = message.from_user.id
-        await message.reply("Введите имя:", reply_markup=KeyBoards.cancel_keyboard)
-        await SuperUserRegister.waiting_for_name.set()
-        logger.info(f"Начата регистрация дня рождения для суперпользователя {user_id}.")
+        if role == "user":
+            await message.reply("Для доступа к этой функции вам необходима подписка уровня Super_User")
+            logger.info(f"Пользователь с ID {user_id} попытался добавить день рождения.")
+            return
+        else:
+            await message.reply("Введите имя:", reply_markup=KeyBoards.cancel_keyboard)
+            await SuperUserRegister.waiting_for_name.set()
+            logger.info(f"Начата регистрация дня рождения для суперпользователя {user_id}.")
 
     @staticmethod
     @dp.message_handler(Text(equals="Отменить", ignore_case=True),state="*")
@@ -34,28 +45,34 @@ class SuperUserRegistration:
         await state.update_data(role = role)
         if current_state is not None:
             await state.finish()
-            await message.reply(
-                "Отмена регистрации",
-                reply_markup=KeyBoards.get_keyboard(role)
-            )
+            await message.reply("Отмена регистрации",reply_markup=KeyBoards.get_keyboard(role))
             logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
         else:
-            await message.reply(
-                "Отмена операции",
-                reply_markup=KeyBoards.get_keyboard((role))
-            )
+            await message.reply("Отмена операции",reply_markup=KeyBoards.get_keyboard((role)))
 
-    @staticmethod
     @dp.message_handler(state=SuperUserRegister.waiting_for_name, content_types=types.ContentTypes.TEXT)
+    @staticmethod
     async def process_name(message: types.Message, state: FSMContext):
         name = message.text.strip()
+        user_id = message.from_user.id
         if not name:
-            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.types.ReplyKeyboardRemove())
+            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.cancel_keyboard)
+            logger.warning(f"Пользователь {user_id} отправил пустое имя.")
+            return
+        parsed = morph.parse(name)
+        if not parsed:
+            await message.reply("Пожалуйста, введите осмысленное имя:",reply_markup=KeyBoards.cancel_keyboard)
+            logger.warning(f"Пользователь {user_id} отправил нераспознаваемое имя: '{name}'.")
+            return
+        is_name = any('Name' in p.tag for p in parsed)
+        if not is_name:
+            await message.reply("Пожалуйста, введите корректное имя:",reply_markup=KeyBoards.cancel_keyboard)
+            logger.warning(f"Пользователь {user_id} отправил некорректное имя: '{name}'.")
             return
         await state.update_data(name=name)
-        await message.reply("Введите рождения в формате ДД.ММ.ГГГГ:")
-        await SuperUserRegister.waiting_for_birthday.set()
-        logger.info(f"Пользователь {message.from_user.id} ввел имя: {name}.")
+        logger.info(f"Пользователь {user_id} ввел имя: {name}.")
+        await (message.reply("Введите вашу дату рождения в формате ДД.ММ.ГГГГ:",reply_markup=KeyBoards.cancel_keyboard))
+        (await SuperUserRegistration.waiting_for_birthday.set())
 
     @staticmethod
     @dp.message_handler(state=SuperUserRegister.waiting_for_birthday, content_types=types.ContentTypes.TEXT)
@@ -64,16 +81,13 @@ class SuperUserRegistration:
         try:
             birthday = datetime.strptime(birthday_str, "%d.%m.%Y").date()
         except ValueError:
-            await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup = KeyBoards.cancel_keyboard)
+            await (message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup = KeyBoards.cancel_keyboard))
             logger.warning(f"Пользователь {message.from_user.id} ввел некорректную дату: '{birthday_str}'.")
             return
         user_data = await state.get_data()
         name = user_data.get("name")
         super_user_id = message.from_user.id
         new_sup_user(name=name, super_user_id = super_user_id, birthday_date=birthday)
-        await message.reply(
-                    f"Вы успешно внесли день рождения!\nИмя: {name}\nДата рождения: {birthday.strftime('%d.%m.%Y')}",
-                    reply_markup=KeyBoards.get_keyboard(role)
-                )
+        await (message.reply(f"Вы успешно внесли день рождения!\nИмя: {name}\nДата рождения:"f" {birthday.strftime('%d.%m.%Y')}",reply_markup=KeyBoards.get_keyboard(role)))
         logger.info(f"Суперпользователь {super_user_id} успешно внес свой день рождения '{name}' и датой рождения {birthday}.")
         await state.finish()

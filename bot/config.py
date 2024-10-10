@@ -3,7 +3,7 @@ from typing import List
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
-    CHAT_ID : str
+    #CHAT_ID : str
     support_id: str  # Сохраняем как строку
     admin_ids: str    # Сохраняем как строку
     super_user_ids: str  # Сохраняем как строку
