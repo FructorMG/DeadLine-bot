@@ -13,8 +13,12 @@ class KeyBoards:
     registration_keyboard = ReplyKeyboardMarkup(resize_keyboard = True)
     registration_keyboard.add("Да").add("Нет")
 
-    cansel_keyboard = ReplyKeyboardMarkup(resize_keyboard = True)
-    cansel_keyboard.add("Отменить")
+    #Клавиатура для отмены регистрации в user_registraton(введена из-за бага, который некорректно работает в super_user_registratin)
+    cancel_reg_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    cancel_reg_keyboard.add("Отменить регистрацию")
+
+    cancel_keyboard = ReplyKeyboardMarkup(resize_keyboard = True)
+    cancel_keyboard.add("Отменить")
 
     @classmethod
     def get_keyboard(cls, role: str) -> ReplyKeyboardMarkup:

@@ -21,21 +21,22 @@ class SuperUserRegistration:
 
     @staticmethod
     @dp.message_handler(Text(equals="Добавить день рождения", ignore_case=True))
-    async def add_birthday_button_pressed(message: types.Message, state: FSMContext, role: str):
+    async def add_birthday_button_pressed(message: types.Message):
         user_id = message.from_user.id
-        await message.reply("Введите имя:", reply_markup=KeyBoards.cansel_keyboard)
+        await message.reply("Введите имя:", reply_markup=KeyBoards.cancel_keyboard)
         await SuperUserRegister.waiting_for_name.set()
         logger.info(f"Начата регистрация дня рождения для суперпользователя {user_id}.")
 
     @staticmethod
-    @dp.message_handler(Text(equals="Отменить", ignore_case=True))
+    @dp.message_handler(Text(equals="Отменить", ignore_case=True),state="*")
     async def cancel_registration(message: types.Message, state: FSMContext, role:str):
         current_state = await state.get_state()
+        await state.update_data(role = role)
         if current_state is not None:
             await state.finish()
             await message.reply(
-                "До встречи! Я всегда тут, просто нажми /start",
-                reply_markup=types.ReplyKeyboardRemove()
+                "Отмена регистрации",
+                reply_markup=KeyBoards.get_keyboard(role)
             )
             logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
         else:
@@ -49,7 +50,7 @@ class SuperUserRegistration:
     async def process_name(message: types.Message, state: FSMContext):
         name = message.text.strip()
         if not name:
-            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.cancel_keyboard)
+            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.types.ReplyKeyboardRemove())
             return
         await state.update_data(name=name)
         await message.reply("Введите рождения в формате ДД.ММ.ГГГГ:")
@@ -63,7 +64,7 @@ class SuperUserRegistration:
         try:
             birthday = datetime.strptime(birthday_str, "%d.%m.%Y").date()
         except ValueError:
-            await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup=KeyBoards.cancel_keyboard)
+            await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup = KeyBoards.cancel_keyboard)
             logger.warning(f"Пользователь {message.from_user.id} ввел некорректную дату: '{birthday_str}'.")
             return
         user_data = await state.get_data()

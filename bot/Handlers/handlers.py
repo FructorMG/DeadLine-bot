@@ -32,7 +32,7 @@ class Handlers:
         logger.info(f"Пользователь {message.from_user.id} (роль {role}) запросил список дней рождений.")
         RecordLogs.log_user_action(message.from_user.id, "запросил список дней рождений.")
         try:
-            if role == "super_users":
+            if role == "super_users" or "admin":
                 #await message.reply(f"2")
                 await get_all_birthdays(message)
                 await Sup_get_all_birthdays(message)
@@ -54,15 +54,15 @@ class Handlers:
             return
         logger.info(f"Администратор {message.from_user.id} запросил список пользователей.")
         RecordLogs.log_admin_action(message.from_user.id, "запросил список пользователей.")
-        try:
-            await get_all_users(message)
-        except FileNotFoundError:
-            await message.reply("Файл users.csv не найден.", reply_markup = KeyBoards.get_keyboard(role))
-            logger.error("Файл users.csv не найден.")
-        except Exception as e:
-            await message.reply(f"Произошла ошибка: {e}", reply_markup = KeyBoards.get_keyboard(role))
-            logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
-            RecordLogs.log_admin_action(message.from_user.id, "произошла ошибка")
+        #try:
+        await get_all_users(message)
+        #except FileNotFoundError:
+        #    await message.reply("Файл users.csv не найден.", reply_markup = KeyBoards.get_keyboard(role))
+        #    logger.error("Файл users.csv не найден.")
+        #except Exception as e:
+        #    await message.reply(f"Произошла ошибка: {e}", reply_markup = KeyBoards.get_keyboard(role))
+        #    logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
+        #    RecordLogs.log_admin_action(message.from_user.id, "произошла ошибка")
     # @dp.message_handler(command = ['/block'])
     # @staticmethod
     # async def user_block(message: types.Message, role: str):

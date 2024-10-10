@@ -16,5 +16,4 @@ async def on_startup(dispatcher):
     asyncio.create_task(scheduled_check())
 
 if __name__ == "__main__":
-
     executor.start_polling(dp, on_startup=on_startup)
