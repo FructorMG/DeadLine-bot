@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from typing import List
-
 class Settings(BaseSettings):
     BOT_TOKEN: str
     #CHAT_ID : str
@@ -20,6 +19,7 @@ class Settings(BaseSettings):
     @property
     def super_users_list(self) -> List[int]:
         return [int(id_.strip()) for id_ in self.super_user_ids.split(',') if id_.strip().isdigit()]
+
 
     class Config:
         env_file = ".env"

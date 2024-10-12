@@ -2,7 +2,6 @@ from sqlalchemy import create_engine, Column, Integer, BigInteger
 from sqlalchemy.orm import declarative_base, sessionmaker
 from aiogram import types
 from bot.config import config
-from datetime import datetime
 import logging
 
 
@@ -42,4 +41,9 @@ async def get_ban_list(message: types.Message):
         await message.reply(f"Бан список:\n{ban_list_text}")
     else:
         await message.reply("Бан-лист пуст.")
+
+async def ban_list():
+    ban_list = session.query(BannedUser).filter(BannedUser.banned_id.isnot(None)).all()
+    return ban_list
+
 
