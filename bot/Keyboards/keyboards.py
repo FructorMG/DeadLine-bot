@@ -7,7 +7,10 @@ class KeyBoards:
 
     # Клавиатура администратора
     admin_keyboard = ReplyKeyboardMarkup(resize_keyboard = True)
-    admin_keyboard.add("Список дней рождений").add("Добавить день рождения").add("Список пользователей")
+    admin_keyboard.add("Список дней рождений").add("Добавить день рождения").add("Список пользователей").add("Ban")
+
+    admin_ban_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    admin_ban_keyboard.add("Список забаненых пользователей").add("Забанить пользователя").add("Вернуться в меню")
 
     #Клавиатура для регистрации
     registration_keyboard = ReplyKeyboardMarkup(resize_keyboard = True)

@@ -25,7 +25,6 @@ class SuperUserRegister(StatesGroup):
     waiting_for_birthday = State()
 
 class SuperUserRegistration:
-
     @rate_limit(3, 'NewB')
     @dp.message_handler(Text(equals="Добавить день рождения", ignore_case=True))
     @staticmethod
@@ -41,17 +40,17 @@ class SuperUserRegistration:
             logger.info(f"Начата регистрация дня рождения для суперпользователя {user_id}.")
 
     @rate_limit(3, 'Cancel')
-    @dp.message_handler(Text(equals="Отменить", ignore_case=True),state="*")
+    @dp.message_handler(Text(equals="Отменить", ignore_case=True), state="*")
     @staticmethod
-    async def cancel_registration(message: types.Message, state: FSMContext, role:str):
+    async def cancel_registration(message: types.Message, state: FSMContext, role: str):
         current_state = await state.get_state()
-        await state.update_data(role = role)
+        await state.update_data(role=role)
         if current_state is not None:
             await state.finish()
-            await message.reply("Отмена регистрации",reply_markup=KeyBoards.get_keyboard(role))
+            await message.reply("Отмена регистрации", reply_markup=KeyBoards.get_keyboard(role))
             logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
         else:
-            await message.reply("Отмена операции",reply_markup=KeyBoards.get_keyboard((role)))
+            await message.reply("Отмена операции", reply_markup=KeyBoards.get_keyboard((role)))
 
 
     @dp.message_handler(state=SuperUserRegister.waiting_for_name, content_types=types.ContentTypes.TEXT)

@@ -1,12 +1,10 @@
 import logging
 from aiogram import types
 from bot.bot import dp
-from bot.bd import get_all_users, get_all_birthdays, Sup_get_all_birthdays
+from bot.bd import get_all_users, get_all_birthdays, Sup_get_all_birthdays, get_ban_list
 from bot.Keyboards import KeyBoards
 from bot.config import config
 from bot.Utils.Record_Logs import RecordLogs
-from bot.Handlers.user_registration import UserRegistration
-from bot.Handlers.super_user_registration import SuperUserRegistration
 from bot.Middleware.secure_middleware import rate_limit
 logger = logging.getLogger("bot.handler")
 handler = logging.StreamHandler()
@@ -16,7 +14,6 @@ handler.setFormatter(formatter)
 
 
 class Handlers:
-
     @dp.message_handler(text="Помощь")
     @rate_limit(5, 'support')
     @staticmethod
@@ -59,3 +56,48 @@ class Handlers:
         logger.info(f"Администратор {message.from_user.id} запросил список пользователей.")
         RecordLogs.log_admin_action(message.from_user.id, "запросил список пользователей.")
         await get_all_users(message)
+
+
+
+
+    @rate_limit(3, 'Ban')
+    @dp.message_handler(text="Ban")
+    async def admin_ban(message: types.Message, role: str):
+        if role != 'admin':
+            await message.reply("У вас нет доступа к этому разделу.", reply_markup=KeyBoards.get_keyboard(role))
+            logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к бан листу.")
+            RecordLogs.log_user_action(message.from_user.id, "попытался получить доступ к списку пользователей.")
+        else:
+            await message.reply("Выберите опцию", reply_markup = KeyBoards.admin_ban_keyboard)
+            logger.info(f"Администратор {message.from_user.id} зашел в бан лист.")
+            RecordLogs.log_admin_action(message.from_user.id, "зашел в бан лист.")
+
+    @rate_limit(3, 'ban_list')
+    @dp.message_handler(text="Список забаненых пользователей")
+    async def admin_ban(message: types.Message, role: str):
+        if role != 'admin':
+            await message.reply("У вас нет доступа к этому разделу.", reply_markup=KeyBoards.get_keyboard(role))
+            logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к бан листу.")
+            RecordLogs.log_user_action(message.from_user.id, "попытался получить доступ к списку пользователей.")
+        else:
+            await get_ban_list(message)
+            logger.info(f"Администратор {message.from_user.id} зашел в бан лист.")
+            RecordLogs.log_admin_action(message.from_user.id, "зашел в бан лист.")
+
+    @rate_limit(3, 'ban_list')
+    @dp.message_handler(text="Забанить пользователя")
+    async def admin_ban(message: types.Message, role: str):
+        if role != 'admin':
+            await message.reply("У вас нет доступа к этому разделу.", reply_markup=KeyBoards.get_keyboard(role))
+            logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к бан листу.")
+            RecordLogs.log_user_action(message.from_user.id, "попытался получить доступ к списку пользователей.")
+        else:
+            await message.reply("Реализовать", reply_markup= KeyBoards.admin_ban_keyboard )
+
+    @rate_limit(3, 'Return')
+    @dp.message_handler(text="Вернуться в меню")
+    async def admin_ban(message: types.Message, role: str):
+        await message.reply("Возврат в меню", reply_markup=KeyBoards.get_keyboard(role))
+
+
+
