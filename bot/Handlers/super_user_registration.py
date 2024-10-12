@@ -5,14 +5,13 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from datetime import datetime
 from bot.bot import dp
-from bot.bd import new_sup_user, SuperUser
+from bot.bd import new_sup_user
 from bot.Keyboards import KeyBoards
 from bot.Middleware.secure_middleware import rate_limit
 import pymorphy3
 
-# Инициализация MorphAnalyzer
-morph = pymorphy3.MorphAnalyzer()
 
+morph = pymorphy3.MorphAnalyzer()
 
 logger = logging.getLogger("bot.super_user_registration")
 handler = logging.StreamHandler()
@@ -47,7 +46,7 @@ class SuperUserRegistration:
         await state.update_data(role=role)
         if current_state is not None:
             await state.finish()
-            await message.reply("Отмена регистрации", reply_markup=KeyBoards.get_keyboard(role))
+            await message.reply("Отмена", reply_markup=KeyBoards.get_keyboard(role))
             logger.info(f"Пользователь {message.from_user.id} отменил регистрацию.")
         else:
             await message.reply("Отмена операции", reply_markup=KeyBoards.get_keyboard((role)))

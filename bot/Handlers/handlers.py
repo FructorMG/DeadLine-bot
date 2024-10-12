@@ -58,8 +58,6 @@ class Handlers:
         await get_all_users(message)
 
 
-
-
     @rate_limit(3, 'Ban')
     @dp.message_handler(text="Ban")
     async def admin_ban(message: types.Message, role: str):
@@ -83,16 +81,6 @@ class Handlers:
             await get_ban_list(message)
             logger.info(f"Администратор {message.from_user.id} зашел в бан лист.")
             RecordLogs.log_admin_action(message.from_user.id, "зашел в бан лист.")
-
-    @rate_limit(3, 'ban_list')
-    @dp.message_handler(text="Забанить пользователя")
-    async def admin_ban(message: types.Message, role: str):
-        if role != 'admin':
-            await message.reply("У вас нет доступа к этому разделу.", reply_markup=KeyBoards.get_keyboard(role))
-            logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к бан листу.")
-            RecordLogs.log_user_action(message.from_user.id, "попытался получить доступ к списку пользователей.")
-        else:
-            await message.reply("Реализовать", reply_markup= KeyBoards.admin_ban_keyboard )
 
     @rate_limit(3, 'Return')
     @dp.message_handler(text="Вернуться в меню")

@@ -29,7 +29,7 @@ class BannedUser(Base):
         return (f'<User(id={self.id} user_id={self.banned_id}')
 Base.metadata.create_all(engine)
 
-def new_user(banned_id: BigInteger):
+def new_banned_user(banned_id: BigInteger):
     new_user = BannedUser(banned_id = banned_id)
     session.add(new_user)
     session.commit()

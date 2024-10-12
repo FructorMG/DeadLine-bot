@@ -12,3 +12,4 @@ def setup_middlewares():
 def setup_handlers():
     UserRegistration()
     SuperUserRegistration()
+    BanRegistration()
