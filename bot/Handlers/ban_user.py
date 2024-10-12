@@ -25,12 +25,12 @@ class BanRegistration:
 
     @dp.message_handler(state=BanRegister.waiting_for_user_id, content_types=types.ContentTypes.TEXT)
     @staticmethod
-    async def process_user_id(message: types.Message, state: FSMContext):
+    async def process_user_id(message: types.Message, state: FSMContext, role: str):
         try:
             banned_id = int(message.text.strip())
         except ValueError:
             await message.reply("Неверный формат ID.")
             return
         new_banned_user(banned_id)
-        await message.reply(f"Пользователь с ID {banned_id} добавлен в бан-лист.")
+        await message.reply(f"Пользователь с ID {banned_id} добавлен в бан-лист.", reply_markup=KeyBoards.get_keyboard(role))
         await state.finish()
