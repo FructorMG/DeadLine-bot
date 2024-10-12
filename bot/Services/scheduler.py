@@ -17,15 +17,12 @@ async def check_deadlines():
     try:
         current_month = today.month
         current_day = today.day
-
-        # Получение уникальных пользователей с днём рождения
         users_with_birthdays = session.query(User).filter(
             extract('month', User.birthday_date) == current_month,
             extract('day', User.birthday_date) == current_day
         ).all()
 
         if users_with_birthdays:
-            # Получение уникальных получателей из таблицы User
             recipient_users = session.query(User.user_id).distinct().all()
             recipient_user_ids = {user_id for (user_id,) in recipient_users}
 

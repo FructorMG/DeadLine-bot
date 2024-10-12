@@ -7,64 +7,55 @@ from bot.config import config
 from bot.Utils.Record_Logs import RecordLogs
 from bot.Handlers.user_registration import UserRegistration
 from bot.Handlers.super_user_registration import SuperUserRegistration
-
+from bot.Middleware.secure_middleware import rate_limit
 logger = logging.getLogger("bot.handler")
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
 
-def setup_handlers():
-    UserRegistration()
-    SuperUserRegistration()
+
+
 class Handlers:
-    @dp.message_handler(text = "Помощь")
+
+    @dp.message_handler(text="Помощь")
+    @rate_limit(5, 'support')
     @staticmethod
     async def support(message: types.Message, role: str = "user"):
         assistants = ", ".join([str(id_) for id_ in config.assistants_list])
-        await message.reply(f"Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {assistants}.",
-                            reply_markup = KeyBoards.get_keyboard(role)
-        )
+        await message.reply(
+            f"Если вы заметили ошибку или хотите поделиться своими пожеланиями по поводу бота, пожалуйста, свяжитесь с {assistants}.",
+            reply_markup=KeyBoards.get_keyboard(role)
+            )
         logger.info(f"Пользователь {message.from_user.id} запросил помощь.")
 
-    @dp.message_handler(text = "Список дней рождений")
+    @rate_limit(3, 'birthdays_list')
+    @dp.message_handler(text="Список дней рождений")
     @staticmethod
     async def birthdays_list(message: types.Message, role: str):
         logger.info(f"Пользователь {message.from_user.id} (роль {role}) запросил список дней рождений.")
         RecordLogs.log_user_action(message.from_user.id, "запросил список дней рождений.")
         try:
             if role == "super_users" or "admin":
-                #await message.reply(f"2")
+                # await message.reply(f"2")
                 await get_all_birthdays(message)
                 await Sup_get_all_birthdays(message)
             else:
-                #await message.reply(f"1")
+                # await message.reply(f"1")
                 await get_all_birthdays(message)
         except Exception as e:
-            await message.reply(f"Произошла ошибка: {e}", reply_markup = KeyBoards.get_keyboard(role))
+            await message.reply(f"Произошла ошибка: {e}", reply_markup=KeyBoards.get_keyboard(role))
             logger.error(f"У пользователя {message.from_user.id} произошла ошибка: {e}")
             RecordLogs.log_user_action(message.from_user.id, f"произошла ошибка: {e}")
 
-    @dp.message_handler(text = "Список пользователей")
+    @rate_limit(3, 'users_list')
+    @dp.message_handler(text="Список пользователей")
     @staticmethod
     async def users_list(message: types.Message, role: str):
         if role != "admin":
-            await message.reply("У вас нет доступа к этому разделу.", reply_markup = KeyBoards.get_keyboard(role))
+            await message.reply("У вас нет доступа к этому разделу.", reply_markup=KeyBoards.get_keyboard(role))
             logger.warning(f"Пользователь {message.from_user.id} попытался получить доступ к списку пользователей.")
             RecordLogs.log_user_action(message.from_user.id, "попытался получить доступ к списку пользователей.")
             return
         logger.info(f"Администратор {message.from_user.id} запросил список пользователей.")
         RecordLogs.log_admin_action(message.from_user.id, "запросил список пользователей.")
-        #try:
         await get_all_users(message)
-        #except FileNotFoundError:
-        #    await message.reply("Файл users.csv не найден.", reply_markup = KeyBoards.get_keyboard(role))
-        #    logger.error("Файл users.csv не найден.")
-        #except Exception as e:
-        #    await message.reply(f"Произошла ошибка: {e}", reply_markup = KeyBoards.get_keyboard(role))
-        #    logger.error(f"У администратора {message.from_user.id} произошла ошибка: {e}")
-        #    RecordLogs.log_admin_action(message.from_user.id, "произошла ошибка")
-    # @dp.message_handler(command = ['/block'])
-    # @staticmethod
-    # async def user_block(message: types.Message, role: str):
-    #     if role != 'admin':
-    #         await message.reply("У вас нет доступа к этой команде.", reply_markup = KeyBoards.get_keyboard(role))

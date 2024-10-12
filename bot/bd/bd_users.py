@@ -11,10 +11,8 @@ logger.setLevel(logging.INFO)
 DATABASE_URL = config.DATABASE_URL
 # Создание движка подключения
 engine = create_engine(DATABASE_URL)
-
 # Базовый класс для декларативных моделей
 Base = declarative_base()
-
 # Создание сессии
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -64,6 +62,7 @@ async def get_all_birthdays(message: types.Message):
 
 Base = declarative_base()
 
+
 class SuperUser(Base):
     __tablename__ = 'super_users'
     id = Column(Integer, primary_key=True, index=True)
@@ -73,7 +72,6 @@ class SuperUser(Base):
 
     def __repr__(self):
         return f"<SuperUser(id={self.id}, name={self.name}, birthday_date={self.birthday_date}, super_user_id={self.super_user_id})>"
-
 Base.metadata.create_all(engine)
 
 def new_sup_user(name: str, super_user_id: int, birthday_date: datetime.date):
@@ -82,12 +80,10 @@ def new_sup_user(name: str, super_user_id: int, birthday_date: datetime.date):
     session.commit()
     logger.info(f"Добавлен новый пользователь: {new_user}")
 
-
 async def Sup_get_all_birthdays(message: types.Message):
     super_user_id = message.from_user.id
     logger.info(f"Начало получения списка дней рождений для super_user_id={super_user_id}")
     try:
-        # Попытка выполнить запрос к базе данных
         try:
             birthdays = session.query(SuperUser).filter(
                 SuperUser.birthday_date.isnot(None),
@@ -98,7 +94,6 @@ async def Sup_get_all_birthdays(message: types.Message):
             logger.error(f"Ошибка при выполнении запроса к БД: {db_query_error}")
             await message.reply("Произошла ошибка при получении данных из базы данных.")
             return
-        # Обработка результатов запроса
         try:
             if birthdays:
                 birthday_list = "\n".join([
@@ -114,7 +109,6 @@ async def Sup_get_all_birthdays(message: types.Message):
             await message.reply("Произошла ошибка при обработке данных.")
 
     except Exception as e:
-        # Общий блок для отлова непредвиденных ошибок
         logger.exception(f"Непредвиденная ошибка в Sup_get_all_birthdays: {e}")
         await message.reply("Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже.")
 

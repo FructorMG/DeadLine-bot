@@ -7,6 +7,7 @@ from datetime import datetime
 from bot.bot import dp
 from bot.bd import new_sup_user, SuperUser
 from bot.Keyboards import KeyBoards
+from bot.Middleware.secure_middleware import rate_limit
 import pymorphy3
 
 # Инициализация MorphAnalyzer
@@ -25,8 +26,9 @@ class SuperUserRegister(StatesGroup):
 
 class SuperUserRegistration:
 
-    @staticmethod
+    @rate_limit(3, 'NewB')
     @dp.message_handler(Text(equals="Добавить день рождения", ignore_case=True))
+    @staticmethod
     async def add_birthday_button_pressed(message: types.Message, role:str):
         user_id = message.from_user.id
         if role == "user":
@@ -38,8 +40,9 @@ class SuperUserRegistration:
             await SuperUserRegister.waiting_for_name.set()
             logger.info(f"Начата регистрация дня рождения для суперпользователя {user_id}.")
 
-    @staticmethod
+    @rate_limit(3, 'Cancel')
     @dp.message_handler(Text(equals="Отменить", ignore_case=True),state="*")
+    @staticmethod
     async def cancel_registration(message: types.Message, state: FSMContext, role:str):
         current_state = await state.get_state()
         await state.update_data(role = role)
@@ -50,32 +53,36 @@ class SuperUserRegistration:
         else:
             await message.reply("Отмена операции",reply_markup=KeyBoards.get_keyboard((role)))
 
+
+    @dp.message_handler(state=SuperUserRegister.waiting_for_name, content_types=types.ContentTypes.TEXT)
+    @staticmethod
     @dp.message_handler(state=SuperUserRegister.waiting_for_name, content_types=types.ContentTypes.TEXT)
     @staticmethod
     async def process_name(message: types.Message, state: FSMContext):
         name = message.text.strip()
         user_id = message.from_user.id
         if not name:
-            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",reply_markup=KeyBoards.cancel_keyboard)
+            await message.reply("Имя не может быть пустым. Пожалуйста, введите ваше имя:",
+                                reply_markup=KeyBoards.cancel_keyboard)
             logger.warning(f"Пользователь {user_id} отправил пустое имя.")
             return
         parsed = morph.parse(name)
         if not parsed:
-            await message.reply("Пожалуйста, введите осмысленное имя:",reply_markup=KeyBoards.cancel_keyboard)
+            await message.reply("Пожалуйста, введите осмысленное имя:", reply_markup=KeyBoards.cancel_keyboard)
             logger.warning(f"Пользователь {user_id} отправил нераспознаваемое имя: '{name}'.")
             return
         is_name = any('Name' in p.tag for p in parsed)
         if not is_name:
-            await message.reply("Пожалуйста, введите корректное имя:",reply_markup=KeyBoards.cancel_keyboard)
+            await message.reply("Пожалуйста, введите корректное имя:", reply_markup=KeyBoards.cancel_keyboard)
             logger.warning(f"Пользователь {user_id} отправил некорректное имя: '{name}'.")
             return
         await state.update_data(name=name)
         logger.info(f"Пользователь {user_id} ввел имя: {name}.")
-        await (message.reply("Введите вашу дату рождения в формате ДД.ММ.ГГГГ:",reply_markup=KeyBoards.cancel_keyboard))
-        (await SuperUserRegistration.waiting_for_birthday.set())
+        await message.reply("Введите вашу дату рождения в формате ДД.ММ.ГГГГ:", reply_markup=KeyBoards.cancel_keyboard)
+        await SuperUserRegister.waiting_for_birthday.set()
 
-    @staticmethod
     @dp.message_handler(state=SuperUserRegister.waiting_for_birthday, content_types=types.ContentTypes.TEXT)
+    @staticmethod
     async def process_birthday(message: types.Message, state: FSMContext, role:str):
         birthday_str = message.text.strip()
         try:

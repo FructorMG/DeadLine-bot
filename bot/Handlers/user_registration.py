@@ -7,12 +7,13 @@ from datetime import datetime
 from bot.bot import dp
 from bot.bd import user_exists, new_user
 from bot.Keyboards import KeyBoards
+from bot.Middleware.secure_middleware import rate_limit
+
 import pymorphy3
 
 # Инициализация MorphAnalyzer
 morph = pymorphy3.MorphAnalyzer()
 
-# Настройка логирования
 logger = logging.getLogger()
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -26,12 +27,13 @@ class UserRegister(StatesGroup):
 
 
 class UserRegistration:
-
+    @rate_limit(3, 'start')
     @dp.message_handler(commands=["start"])
     @staticmethod
     async def send_welcome(message: types.Message):
         await message.reply("Привет! Я бот для уведомлений о днях рождения.\nДля продолжения необходимо пройти регистрацию. Продолжить?",reply_markup=KeyBoards.registration_keyboard)
 
+    @rate_limit(3, 'Yes')
     @dp.message_handler(Text(equals="Да", ignore_case=True))
     @staticmethod
     async def start_registration(message: types.Message, state: FSMContext, role:str):
@@ -46,12 +48,14 @@ class UserRegistration:
         await UserRegister.waiting_for_name.set()
         logger.info(f"Начата регистрация для пользователя {user_id}.")
 
+    @rate_limit(3, 'No')
     @dp.message_handler(Text(equals="Нет", ignore_case=True))
     @staticmethod
     async def handle_no_response(message: types.Message):
         await message.reply("До встречи! Я всегда тут, просто нажми /start",reply_markup=types.ReplyKeyboardRemove())
         logger.info(f"Пользователь {message.from_user.id} отменил регистрацию, выбрав 'Нет'.")
 
+    @rate_limit(3, 'CancelRegistation')
     @dp.message_handler(Text(equals="Отменить регистрацию", ignore_case=True),state="*")
     @staticmethod
     async def cancel_registration(message: types.Message, state: FSMContext):
@@ -101,11 +105,9 @@ class UserRegistration:
             await message.reply("Некорректный формат даты. Пожалуйста, введите дату в формате ДД.ММ.ГГГГ:", reply_markup=KeyBoards.cancel_reg_keyboard)
             logger.warning(f"Пользователь {user_id} ввел некорректную дату: '{birthday_str}'.")
             return
-
         user_data = await state.get_data()
         name = user_data.get("name")
         user_username = message.from_user.username or "unknown"
-
         if user_exists(user_id):
             await message.reply("Вы уже зарегистрированы.", reply_markup=KeyBoards.get_keyboard(role))
             logger.info(f"Пользователь {user_id} попытался зарегистрироваться повторно.")

@@ -4,9 +4,9 @@ from typing import List
 class Settings(BaseSettings):
     BOT_TOKEN: str
     #CHAT_ID : str
-    support_id: str  # Сохраняем как строку
-    admin_ids: str    # Сохраняем как строку
-    super_user_ids: str  # Сохраняем как строку
+    support_id: str
+    admin_ids: str
+    super_user_ids: str
     DATABASE_URL: str
 
     @property
